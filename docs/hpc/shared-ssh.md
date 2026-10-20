@@ -1,15 +1,15 @@
 # Shared HPC SSH connection
 
-Connect to the ITU VPN. From the workspace root, run:
+Connect to the ITU VPN. From the repository root, run:
 
 ```bash
-./HCP_demo/connect.sh
+./scripts/connect-hpc.sh
 ```
 
 The script uses the ITU username `s25441`. To use another username, run:
 
 ```bash
-./HCP_demo/connect.sh ITU_USERNAME
+./scripts/connect-hpc.sh ITU_USERNAME
 ```
 
 Enter your password in the terminal. Keep the SSH connection open while the agent uses HPC.
