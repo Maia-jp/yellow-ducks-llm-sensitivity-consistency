@@ -26,11 +26,7 @@ For HPC access, connect to the ITU VPN. From this repository root, run:
 See the [shared SSH instructions](docs/hpc/shared-ssh.md).
 
 ## Current status
-
-We did not run the reproduction experiments during repository setup.
-The copied notebooks contain existing outputs from the source copy.
-The source `LLM TREC.ipynb` is incomplete and needs restoration before use.
-
+ ????
 ## Sources
 
 - [Paper PDF](docs/paper.pdf)
