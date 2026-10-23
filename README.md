@@ -25,6 +25,37 @@ For HPC access, connect to the ITU VPN. From this repository root, run:
 
 See the [shared SSH instructions](docs/hpc/shared-ssh.md).
 
+## Qwen3.5-4B experiment
+
+The paper's original open models are Llama-3-70B-Instruct and Mixtral-8x7B-Instruct-v0.1.
+Qwen3.5-4B is an added model comparison. It does not replace either original model.
+The newest Qwen release is Qwen3.8, but its smallest open checkpoint is 27B. Qwen3.5-4B is the newest Qwen checkpoint at 4B.
+
+From this repository root on HPC, submit a one-prompt model check:
+
+```bash
+sbatch scripts/qwen35_smoke.sbatch
+```
+
+The job keeps the vLLM environment and model cache in your HPC home directory.
+It does not save model weights in the repository.
+The job writes its output to `qwen35-smoke-<JOB_ID>.log`.
+
+The full runner reuses the paper's code and notebook prompts for the four intact notebooks.
+Run it from `sensitivity-consistency-LLM/` after you install the project requirements and place each notebook's input files in its expected `data/` paths:
+
+```bash
+python ../scripts/reproduce_qwen.py --dataset cb
+python ../scripts/reproduce_qwen.py --dataset dbpedia
+python ../scripts/reproduce_qwen.py --dataset rte
+python ../scripts/reproduce_qwen.py --dataset wos
+```
+
+Set `QWEN_API_BASE` if the model server does not use `http://127.0.0.1:8000/v1`.
+Use `--smoke` for two samples and three prompt variants. These results do not reproduce the paper.
+The TREC notebook in the source copy is truncated and cannot be read as notebook JSON.
+The runner saves Qwen results under `sensitivity-consistency-LLM/results/qwen35/`.
+
 ## Current status
 
 We did not run the reproduction experiments during repository setup.
