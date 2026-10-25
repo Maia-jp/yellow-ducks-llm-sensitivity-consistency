@@ -73,13 +73,24 @@ Run the setup test with:
 sbatch scripts/test_vllm011.sbatch
 ```
 
+To test a supported Qwen model with the same vLLM version, submit:
+
+```bash
+sbatch scripts/test_qwen3_vllm011.sbatch
+```
+
+This job installs vLLM in temporary node storage and runs `Qwen/Qwen3-4B`.
+It stores the model cache in your HPC home directory.
+This checks Qwen3 support. It does not test Qwen3.5 or reproduce paper results.
+
 ## Current status
 
 We did not run the reproduction experiments during repository setup.
 The copied notebooks contain existing outputs from the source copy.
 The source `LLM TREC.ipynb` is incomplete and needs restoration before use.
 The first Qwen3.5 vLLM job used a CUDA 13 wheel on a CUDA 12.9 node and did not start.
-The vLLM preflight uses version 0.11.0 with CUDA 12.8 and does not support Qwen3.5.
+The OPT preflight passed with vLLM 0.11.0 and CUDA 12.8.
+It does not test Qwen3.5. The Qwen3 test uses a supported Qwen model instead.
 
 ## Sources
 
