@@ -73,15 +73,17 @@ Run the setup test with:
 sbatch scripts/test_vllm011.sbatch
 ```
 
-To test a supported Qwen model with the same vLLM version, submit:
+The small test above checks a tiny OPT model and confirms basic GPU inference.
+To check a supported Qwen architecture, submit the Qwen3-4B test:
 
 ```bash
 sbatch scripts/test_qwen3_vllm011.sbatch
 ```
 
-This job installs vLLM in temporary node storage and runs `Qwen/Qwen3-4B`.
-It stores the model cache in your HPC home directory.
-This checks Qwen3 support. It does not test Qwen3.5 or reproduce paper results.
+The job installs vLLM 0.11.0 and Transformers 4.57.1 in temporary node storage.
+It downloads `Qwen/Qwen3-4B` to your HPC home cache and generates 32 tokens.
+The job log is `qwen3-4b-vllm011-<JOB_ID>.log` in the repository root.
+The test checks Qwen3 support. It does not test Qwen3.5 or reproduce paper results.
 
 ## Current status
 

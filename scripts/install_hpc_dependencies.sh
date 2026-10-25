@@ -46,7 +46,8 @@ if [[ ! -x "$VLLM_VENV/bin/python" ]]; then
     uv venv --python "$(command -v python3)" "$VLLM_VENV"
 fi
 uv pip install --python "$VLLM_VENV/bin/python" \
-    --torch-backend="$TORCH_BACKEND" "vllm==$VLLM_VERSION"
+    --torch-backend="$TORCH_BACKEND" "vllm==$VLLM_VERSION" \
+    "transformers==4.57.1"
 
 if [[ ! -x "$EVAL_VENV/bin/python" ]]; then
     uv venv --python "$(command -v python3)" "$EVAL_VENV"

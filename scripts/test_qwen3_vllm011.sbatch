@@ -28,7 +28,7 @@ fi
 
 uv venv --python "$(command -v python3)" "$runtime/venv"
 uv pip install --python "$runtime/venv/bin/python" \
-    --torch-backend=cu128 "vllm==0.11.0"
+    --torch-backend=cu128 "vllm==0.11.0" "transformers==4.57.1"
 
 nvidia-smi --query-gpu=name,driver_version --format=csv
 "$runtime/venv/bin/python" -B -u \
