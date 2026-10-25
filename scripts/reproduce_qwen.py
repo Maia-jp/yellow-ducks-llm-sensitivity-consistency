@@ -19,21 +19,6 @@ NOTEBOOKS = {
 }
 
 
-def qwen_chat(temperature: float):
-    from langchain_openai import ChatOpenAI
-
-    extra_body = {"chat_template_kwargs": {"enable_thinking": False}}
-    return ChatOpenAI(
-        model=os.getenv("QWEN_MODEL", "Qwen/Qwen3.5-4B"),
-        temperature=temperature,
-        base_url=os.getenv("QWEN_API_BASE", "http://127.0.0.1:8000/v1"),
-        api_key=os.getenv("QWEN_API_KEY", "EMPTY"),
-        timeout=600,
-        max_retries=3,
-        model_kwargs={"extra_body": extra_body, "seed": 42},
-    )
-
-
 def source_for(notebook: dict, starts_with: str) -> str:
     for cell in notebook.get("cells", []):
         if cell.get("cell_type") != "code":
@@ -58,9 +43,10 @@ def main() -> int:
         raise SystemExit(f"Cannot read {notebook_path}: {exc}") from exc
 
     sys.path.insert(0, str(CODE_DIR))
-    import util
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from qwen_model import register_qwen
 
-    util.llm_map["qwen35"] = qwen_chat
+    register_qwen()
     namespace: dict = {"__name__": "__qwen_reproduction__"}
     exec(compile(source_for(notebook, "import os"), str(notebook_path), "exec"), namespace)
 

@@ -12,26 +12,26 @@
 
 set -euo pipefail
 
-module load Python/3.12.3-GCCcore-13.3.0
+module load Python/3.11.3-foss-2023a
 
-QWEN_VENV="$HOME/.venvs/qwen35-vllm-0.32.0"
+VLLM_VENV="$HOME/.venvs/qwen35-vllm-0.32.0-py311"
 HF_HOME="$HOME/.cache/huggingface"
 export HF_HOME
 export HF_HUB_CACHE="$HF_HOME/hub"
 export HF_HUB_DOWNLOAD_TIMEOUT=60
 
-mkdir -p "$(dirname "$QWEN_VENV")" "$HF_HUB_CACHE"
-if [[ ! -x "$QWEN_VENV/bin/python" ]]; then
-    python3 -m venv "$QWEN_VENV"
-    "$QWEN_VENV/bin/python" -m pip install --upgrade pip
-    "$QWEN_VENV/bin/python" -m pip install "vllm==0.32.0"
+mkdir -p "$(dirname "$VLLM_VENV")" "$HF_HUB_CACHE"
+if [[ ! -x "$VLLM_VENV/bin/python" ]]; then
+    python3 -m venv "$VLLM_VENV"
+    "$VLLM_VENV/bin/python" -m pip install --upgrade pip
+    "$VLLM_VENV/bin/python" -m pip install "vllm==0.32.0"
 fi
+"$VLLM_VENV/bin/python" -m pip install --upgrade "openai>=2.25.0,<4"
 
-source "$QWEN_VENV/bin/activate"
 MODEL="Qwen/Qwen3.5-4B"
 SERVER_LOG="$HOME/qwen35-vllm-${SLURM_JOB_ID}.log"
 
-vllm serve "$MODEL" \
+"$VLLM_VENV/bin/vllm" serve "$MODEL" \
     --host 127.0.0.1 \
     --port 8000 \
     --dtype bfloat16 \

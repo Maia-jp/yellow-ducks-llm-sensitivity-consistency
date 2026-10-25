@@ -42,25 +42,44 @@ It does not save model weights in the repository.
 The job writes its output to `qwen35-smoke-<JOB_ID>.log`.
 
 The full runner reuses the paper's code and notebook prompts for the four intact notebooks.
-Run it from `sensitivity-consistency-LLM/` after you install the project requirements and place each notebook's input files in its expected `data/` paths:
+From the repository root on HPC, submit one dataset job after you place its input file in the expected `data/` path:
 
 ```bash
-python ../scripts/reproduce_qwen.py --dataset cb
-python ../scripts/reproduce_qwen.py --dataset dbpedia
-python ../scripts/reproduce_qwen.py --dataset rte
-python ../scripts/reproduce_qwen.py --dataset wos
+sbatch --export=ALL,DATASET=cb scripts/qwen35_reproduce.sbatch
 ```
 
-Set `QWEN_API_BASE` if the model server does not use `http://127.0.0.1:8000/v1`.
-Use `--smoke` for two samples and three prompt variants. These results do not reproduce the paper.
+Use `DATASET=dbpedia`, `DATASET=rte`, or `DATASET=wos` for the other intact notebooks.
+Add `SMOKE=1` to run two samples and three prompt variants. These are technical checks, not paper results.
+The job starts Qwen with vLLM, runs a one-prompt check, then runs the notebook evaluation.
+It saves model weights and the Python environment in your HPC home directory.
 The TREC notebook in the source copy is truncated and cannot be read as notebook JSON.
 The runner saves Qwen results under `sensitivity-consistency-LLM/results/qwen35/`.
+
+### Install HPC dependencies
+
+Use the installer before the small vLLM setup test:
+
+```bash
+bash scripts/install_hpc_dependencies.sh
+```
+
+The installer creates separate environments for vLLM and the paper evaluator.
+It uses vLLM 0.11.0 with the CUDA 12.8 PyTorch backend by default.
+This version checks the cluster runtime with `facebook/opt-125m`.
+It does not claim Qwen3.5 support. The Qwen3.5 job needs a newer vLLM build.
+Run the setup test with:
+
+```bash
+sbatch scripts/test_vllm011.sbatch
+```
 
 ## Current status
 
 We did not run the reproduction experiments during repository setup.
 The copied notebooks contain existing outputs from the source copy.
 The source `LLM TREC.ipynb` is incomplete and needs restoration before use.
+The first Qwen3.5 vLLM job used a CUDA 13 wheel on a CUDA 12.9 node and did not start.
+The vLLM preflight uses version 0.11.0 with CUDA 12.8 and does not support Qwen3.5.
 
 ## Sources
 
