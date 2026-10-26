@@ -42,6 +42,8 @@ It does not save model weights in the repository.
 The job writes its output to `qwen35-smoke-<JOB_ID>.log`.
 
 The full runner reuses the paper's code and notebook prompts for the four intact notebooks.
+For CB, first prepare the labeled test split as shown in the
+[CB data instructions](docs/reproduction-guide.md#commitmentbank-test-data).
 From the repository root on HPC, submit one dataset job after you place its input file in the expected `data/` path:
 
 ```bash

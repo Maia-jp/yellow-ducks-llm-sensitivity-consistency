@@ -32,9 +32,21 @@ def source_for(notebook: dict, starts_with: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", choices=sorted(NOTEBOOKS), required=True)
+    parser.add_argument(
+        "--input-file",
+        type=Path,
+        help="Override the notebook input file. This option applies to CB only.",
+    )
     parser.add_argument("--smoke", action="store_true", help="Use two samples and three prompt variants. These are not paper results.")
     parser.add_argument("--max-samples", type=int, help="Run a smaller diagnostic sample. These are not full paper results.")
     args = parser.parse_args()
+
+    if args.input_file is not None and args.dataset != "cb":
+        raise SystemExit("--input-file is supported only for --dataset cb.")
+    if args.dataset == "cb" and args.input_file is None:
+        args.input_file = CODE_DIR / "data/CB/test_labeled.jsonl"
+    if args.input_file is not None and not args.input_file.is_file():
+        raise SystemExit(f"CB input file does not exist: {args.input_file}")
 
     notebook_path = CODE_DIR / NOTEBOOKS[args.dataset]
     try:
@@ -51,6 +63,21 @@ def main() -> int:
     exec(compile(source_for(notebook, "import os"), str(notebook_path), "exec"), namespace)
 
     data_source = source_for(notebook, "input_file =")
+    if args.input_file is not None:
+        input_path = args.input_file.resolve()
+        cache_path = input_path.with_name(input_path.name + ".parsed.json")
+        original_input = "input_file = Path('./data/CB/train.jsonl')"
+        original_cache = "processed_data_file = Path('./data/CB_RESULTS/data.json')"
+        if original_input not in data_source or original_cache not in data_source:
+            raise SystemExit(
+                "The CB notebook input lines changed. Review the input override before running."
+            )
+        data_source = data_source.replace(
+            original_input, f"input_file = Path({json.dumps(str(input_path))})", 1
+        )
+        data_source = data_source.replace(
+            original_cache, f"processed_data_file = Path({json.dumps(str(cache_path))})", 1
+        )
     exec(compile(data_source, str(notebook_path), "exec"), namespace)
     config_source = source_for(notebook, "question_to_rewrite =")
     exec(compile(config_source, str(notebook_path), "exec"), namespace)

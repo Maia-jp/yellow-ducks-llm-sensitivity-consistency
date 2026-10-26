@@ -26,7 +26,7 @@ export QWEN_MODEL="Qwen/Qwen3.5-4B"
 export QWEN_API_BASE="http://127.0.0.1:8000/v1"
 
 case "$DATASET" in
-    cb) DATA_FILE="$CODE_DIR/data/CB/train.jsonl" ;;
+    cb) DATA_FILE="$CODE_DIR/data/CB/test_labeled.jsonl" ;;
     dbpedia) DATA_FILE="$CODE_DIR/data/DBPEDIA/test.csv" ;;
     rte) DATA_FILE="$CODE_DIR/data/RTE/train.jsonl" ;;
     wos) DATA_FILE="$CODE_DIR/data/WOS46985/X.txt" ;;
@@ -78,8 +78,11 @@ trap cleanup EXIT
 export PYTHONPATH="$SLURM_SUBMIT_DIR/scripts:$CODE_DIR${PYTHONPATH:+:$PYTHONPATH}"
 export QWEN_REGISTER_PROVIDER=1
 cd "$CODE_DIR"
-if [[ "$SMOKE" == 1 ]]; then
-    "$EVAL_VENV/bin/python" "$SLURM_SUBMIT_DIR/scripts/reproduce_qwen.py" --dataset "$DATASET" --smoke
-else
-    "$EVAL_VENV/bin/python" "$SLURM_SUBMIT_DIR/scripts/reproduce_qwen.py" --dataset "$DATASET"
+RUN_ARGS=(--dataset "$DATASET")
+if [[ "$DATASET" == cb ]]; then
+    RUN_ARGS+=(--input-file "$DATA_FILE")
 fi
+if [[ "$SMOKE" == 1 ]]; then
+    RUN_ARGS+=(--smoke)
+fi
+"$EVAL_VENV/bin/python" "$SLURM_SUBMIT_DIR/scripts/reproduce_qwen.py" "${RUN_ARGS[@]}"

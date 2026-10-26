@@ -64,6 +64,45 @@ The paper reports sensitivity, consistency, and Micro-F1 for each dataset and pr
 
 Here, `S` means sensitivity, `C` means consistency, and `F1` means Micro-F1. The paper uses 30 prompt variants, temperature 0, and seed 42.
 
+## CommitmentBank test data
+
+The paper reports 250 CB test examples ([paper, Section 4](https://aclanthology.org/2025.naacl-long.73.pdf)).
+The released CB notebook reads `train.jsonl`.
+The official SuperGLUE test file has no labels, so the notebook cannot calculate Micro-F1 or class-based consistency from that file.
+
+The [original CB data](https://github.com/mcdm/CommitmentBank) includes annotator responses for each item.
+The published [recast rule](https://aclanthology.org/D19-1630.pdf) maps at least 80% agreement to entailment, neutral, or contradiction.
+The preparation script matches test examples to these annotations and applies this rule.
+It writes `test_labeled.jsonl` and leaves the source files unchanged.
+
+On the pinned source files, the script matched all 250 test examples.
+It produced 113 entailment, 16 neutral, and 121 contradiction labels.
+These counts match the CB paper's test split table.
+The same rule reproduces all labels in the official train and validation files.
+
+Run these commands from the repository root:
+
+```bash
+mkdir -p sensitivity-consistency-LLM/data/CB
+curl -fsSLo sensitivity-consistency-LLM/data/CB/test.jsonl \
+  https://raw.githubusercontent.com/nec-research/sensitivity-consistency-LLM/657355688d4b58a6e3a2ac20484518c5d402c8d8/data/CB/test.jsonl
+curl -fsSLo sensitivity-consistency-LLM/data/CommitmentBank-items.csv \
+  https://raw.githubusercontent.com/mcdm/CommitmentBank/14ea91f56e3575b011d28fca5c37a1f5e92769b7/CommitmentBank-items.csv
+python3 scripts/prepare_cb_test_labels.py \
+  --test-jsonl sensitivity-consistency-LLM/data/CB/test.jsonl \
+  --items-csv sensitivity-consistency-LLM/data/CommitmentBank-items.csv \
+  --output-jsonl sensitivity-consistency-LLM/data/CB/test_labeled.jsonl
+```
+
+The CB HPC runner uses `test_labeled.jsonl` by default.
+Submit the full run with `sbatch --export=ALL,DATASET=cb scripts/qwen35_reproduce.sbatch`.
+Use `SMOKE=1` for a two-example setup check.
+Do not use recovered test labels to select models or tune prompts.
+
+The labels come from original public annotations, not an author-provided SuperGLUE gold-label file.
+The published class counts and every available train and validation label match.
+See the dated evidence log in [findings.md](findings.md#cb-split-finding).
+
 ## Setup
 
 From the repository root, enter the code directory before you run the setup commands:
