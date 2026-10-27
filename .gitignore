@@ -1,13 +1,24 @@
-**ipynb_checkpoints**
-**__pycache__**
-**data**/**
+.ipynb_checkpoints/
+__pycache__/
 
 .DS_Store
 .venv/
 .env
 .env.*
 !.env.example
-data/
+
+# Old data folder at the repository root. The data now lives in sensitivity-consistency-LLM/data/.
+/data/
+
+# Run output. Do not commit it.
+**/data/*_RESULTS/
 results/
+*.parsed.json
 *.log
 *.pid
+
+# Windows download markers that came with the authors' files
+*:Zone.Identifier
+
+# Derived from WOS46985/X.zip. Run scripts/fetch_datasets.py to extract it (65 MB).
+sensitivity-consistency-LLM/data/WOS46985/X.txt

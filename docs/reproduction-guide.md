@@ -66,6 +66,8 @@ Here, `S` means sensitivity, `C` means consistency, and `F1` means Micro-F1. The
 
 ## CommitmentBank test data
 
+The CB files, the labeled test file and the explanation are now committed. See [CB/README.md](../sensitivity-consistency-LLM/data/CB/README.md) and run `python3 scripts/fetch_datasets.py` to check or rebuild them. The download commands below show how we built the labeled file first.
+
 The paper reports 250 CB test examples ([paper, Section 4](https://aclanthology.org/2025.naacl-long.73.pdf)).
 The released CB notebook reads `train.jsonl`.
 The official SuperGLUE test file has no labels, so the notebook cannot calculate Micro-F1 or class-based consistency from that file.

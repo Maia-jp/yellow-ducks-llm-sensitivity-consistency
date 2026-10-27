@@ -98,3 +98,14 @@ The test labels are reconstructed from the original public annotations. We did n
 | 2026-10-26 | Re-ran the local data preparation checks. | 250 test rows matched. Counts were 113 entailment, 16 neutral, and 121 contradiction. No HPC inference ran for this change. |
 
 The recovered labels support the paper's CB test evaluation. They are reconstructed labels, not an author-provided hidden-label file. Keep model and prompt choices fixed before you inspect test scores.
+
+## Dataset fidelity check (all five datasets)
+
+Date: 2026-10-27
+
+We compared every data file with its official source. The result, the differences, and the commands to rebuild the data are in [datasets/README.md](datasets/README.md).
+
+Two findings change earlier statements in this file:
+
+- The authors' `parse_CB` reads the `label` field of every row. The official `test.jsonl` has no labels. The authors' own run therefore used a labeled file, most likely `train.jsonl`. The paper's CB numbers probably come from `train.jsonl`, not from the test split.
+- The reference table in the README repeats two Mixtral CB sensitivity values from the paper (Detail 0.013, 1-shot 0.017) that most likely have a decimal-point error. The authors' stored outputs show 0.1255 and 0.1740.

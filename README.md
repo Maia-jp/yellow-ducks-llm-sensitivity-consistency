@@ -10,7 +10,9 @@ Our goal is to reproduce the Mixtral results and compare them with a smaller mod
 |---|---|
 | [sensitivity-consistency-LLM/](sensitivity-consistency-LLM/) | Original Python code, five notebooks, dependencies, and NEC license |
 | [docs/](docs/README.md) | Paper, citation, reproduction guide, and HPC instructions |
-| [scripts/](scripts/) | Shared HPC SSH connection script |
+| [sensitivity-consistency-LLM/data/](sensitivity-consistency-LLM/data/README.md) | The five datasets, subset files, and one explanation file for each dataset |
+| [docs/datasets/](docs/datasets/README.md) | Dataset checks against the official sources, pinned hashes, and sample IDs |
+| [scripts/](scripts/) | HPC scripts, dataset check and rebuild tools |
 
 ## Start
 
@@ -24,6 +26,17 @@ For HPC access, connect to the ITU VPN. From this repository root, run:
 ```
 
 See the [shared SSH instructions](docs/hpc/shared-ssh.md).
+
+## Data
+
+All datasets are in `sensitivity-consistency-LLM/data/`. Each dataset folder has a `README.md` that explains the source, the cut and the 1-shot examples.
+Git ignores one derived file, `WOS46985/X.txt` (65 MB). Extract it and check every file from the repository root:
+
+```bash
+python3 scripts/fetch_datasets.py
+```
+
+On HPC, run this with `srun` or `sbatch`. Do not run it on the login node.
 
 ## Qwen3.5-4B experiment
 
@@ -42,9 +55,10 @@ It does not save model weights in the repository.
 The job writes its output to `qwen35-smoke-<JOB_ID>.log`.
 
 The full runner reuses the paper's code and notebook prompts for the four intact notebooks.
-For CB, first prepare the labeled test split as shown in the
-[CB data instructions](docs/reproduction-guide.md#commitmentbank-test-data).
-From the repository root on HPC, submit one dataset job after you place its input file in the expected `data/` path:
+The data files are in the repository. The WoS job needs `X.txt`, so run `scripts/fetch_datasets.py` first (see Data).
+The CB job reads `CB/test_labeled.jsonl`. The released notebook reads `CB/train.jsonl`. Read the
+[CB split note](sensitivity-consistency-LLM/data/CB/README.md) before you choose.
+From the repository root on HPC, submit one dataset job:
 
 ```bash
 sbatch --export=ALL,DATASET=cb scripts/qwen35_reproduce.sbatch
@@ -54,7 +68,7 @@ Use `DATASET=dbpedia`, `DATASET=rte`, or `DATASET=wos` for the other intact note
 Add `SMOKE=1` to run two samples and three prompt variants. These are technical checks, not paper results.
 The job starts Qwen with vLLM, runs a one-prompt check, then runs the notebook evaluation.
 It saves model weights and the Python environment in your HPC home directory.
-The TREC notebook in the source copy is truncated and cannot be read as notebook JSON.
+The TREC notebook in the source copy is truncated. `LLM TREC (recovered).ipynb` keeps its 7 complete cells. The runner does not support TREC yet.
 The runner saves Qwen results under `sensitivity-consistency-LLM/results/qwen35/`.
 
 ### Install HPC dependencies
