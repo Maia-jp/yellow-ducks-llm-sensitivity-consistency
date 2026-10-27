@@ -4,20 +4,44 @@ This Seminars in Data Science project reproduces selected results from
 [What Did I Do Wrong? Quantifying LLMs’ Sensitivity and Consistency to Prompt Engineering](https://aclanthology.org/2025.naacl-long.73/).
 Our goal is to reproduce the Mixtral results and compare them with a smaller model.
 
+This branch (`dataset-fidelity`) is the foundation. It holds the paper's code, the verified datasets, and the reference values.
+It holds no model results. Experiments with other models belong on separate branches.
+
 ## Project structure
 
 | Folder | Contents |
 |---|---|
-| [sensitivity-consistency-LLM/](sensitivity-consistency-LLM/) | Original Python code, five notebooks, dependencies, and NEC license |
-| [docs/](docs/README.md) | Paper, citation, reproduction guide, and HPC instructions |
-| [sensitivity-consistency-LLM/data/](sensitivity-consistency-LLM/data/README.md) | The five datasets, subset files, and one explanation file for each dataset |
-| [docs/datasets/](docs/datasets/README.md) | Dataset checks against the official sources, pinned hashes, and sample IDs |
-| [scripts/](scripts/) | HPC scripts, dataset check and rebuild tools |
+| [sensitivity-consistency-LLM/](sensitivity-consistency-LLM/README.md) | The paper's Python code, five notebooks, pinned dependencies, and the NEC license |
+| [sensitivity-consistency-LLM/data/](sensitivity-consistency-LLM/data/README.md) | The five datasets, the 2000-sample subsets, and one explanation file for each dataset |
+| [docs/](docs/README.md) | Paper, citation, reproduction guide, dataset checks, and HPC instructions |
+| [scripts/](scripts/) | Dataset tools and the shared HPC SSH script |
 
 ## Start
 
-Read the [reproduction guide](docs/reproduction-guide.md) for setup, reference results, and the experiment plan.
-Run the notebook setup commands from `sensitivity-consistency-LLM/`.
+1. Read the [reproduction guide](docs/reproduction-guide.md). It has the setup, the reference values and the run plan.
+2. Check the data: `python3 scripts/fetch_datasets.py --verify-only` (see Data).
+3. Run the notebook setup commands from `sensitivity-consistency-LLM/`.
+
+## Data
+
+All datasets are in `sensitivity-consistency-LLM/data/`. Each dataset folder has a `README.md` that explains the source, the cut and the 1-shot examples.
+We compared every file with its official source. The result is in [docs/datasets/README.md](docs/datasets/README.md).
+
+Git ignores one derived file, `WOS46985/X.txt` (65 MB). Extract it and check every file from the repository root:
+
+```bash
+python3 scripts/fetch_datasets.py
+```
+
+The script downloads a file only when it is missing or damaged. It checks every file against `docs/datasets/data-manifest.json`.
+On HPC, run it with `srun` or `sbatch`. Do not run it on the login node.
+
+Two points to know before you run an experiment:
+
+- **CB:** the paper says "test", but the released notebook reads `train.jsonl`. Read the [CB note](sensitivity-consistency-LLM/data/CB/README.md).
+- **Paper Table 1:** two Mixtral CB sensitivity values most likely have a decimal error. The [guide](docs/reproduction-guide.md#reference-results-paper-table-1) gives the values to use.
+
+## ITU HPC
 
 For HPC access, connect to the ITU VPN. From this repository root, run:
 
@@ -25,90 +49,14 @@ For HPC access, connect to the ITU VPN. From this repository root, run:
 ./scripts/connect-hpc.sh
 ```
 
-See the [shared SSH instructions](docs/hpc/shared-ssh.md).
+See the [shared SSH instructions](docs/hpc/shared-ssh.md) and the [HPC setup guide](docs/hpc/agent-setup.md).
 
-## Data
-
-All datasets are in `sensitivity-consistency-LLM/data/`. Each dataset folder has a `README.md` that explains the source, the cut and the 1-shot examples.
-Git ignores one derived file, `WOS46985/X.txt` (65 MB). Extract it and check every file from the repository root:
-
-```bash
-python3 scripts/fetch_datasets.py
-```
-
-On HPC, run this with `srun` or `sbatch`. Do not run it on the login node.
-
-## Qwen3.5-4B experiment
-
-The paper's original open models are Llama-3-70B-Instruct and Mixtral-8x7B-Instruct-v0.1.
-Qwen3.5-4B is an added model comparison. It does not replace either original model.
-The newest Qwen release is Qwen3.8, but its smallest open checkpoint is 27B. Qwen3.5-4B is the newest Qwen checkpoint at 4B.
-
-From this repository root on HPC, submit a one-prompt model check:
-
-```bash
-sbatch scripts/qwen35_smoke.sbatch
-```
-
-The job keeps the vLLM environment and model cache in your HPC home directory.
-It does not save model weights in the repository.
-The job writes its output to `qwen35-smoke-<JOB_ID>.log`.
-
-The full runner reuses the paper's code and notebook prompts for the four intact notebooks.
-The data files are in the repository. The WoS job needs `X.txt`, so run `scripts/fetch_datasets.py` first (see Data).
-The CB job reads `CB/test_labeled.jsonl`. The released notebook reads `CB/train.jsonl`. Read the
-[CB split note](sensitivity-consistency-LLM/data/CB/README.md) before you choose.
-From the repository root on HPC, submit one dataset job:
-
-```bash
-sbatch --export=ALL,DATASET=cb scripts/qwen35_reproduce.sbatch
-```
-
-Use `DATASET=dbpedia`, `DATASET=rte`, or `DATASET=wos` for the other intact notebooks.
-Add `SMOKE=1` to run two samples and three prompt variants. These are technical checks, not paper results.
-The job starts Qwen with vLLM, runs a one-prompt check, then runs the notebook evaluation.
-It saves model weights and the Python environment in your HPC home directory.
-The TREC notebook in the source copy is truncated. `LLM TREC (recovered).ipynb` keeps its 7 complete cells. The runner does not support TREC yet.
-The runner saves Qwen results under `sensitivity-consistency-LLM/results/qwen35/`.
-
-### Install HPC dependencies
-
-Use the installer before the small vLLM setup test:
-
-```bash
-bash scripts/install_hpc_dependencies.sh
-```
-
-The installer creates separate environments for vLLM and the paper evaluator.
-It uses vLLM 0.11.0 with the CUDA 12.8 PyTorch backend by default.
-This version checks the cluster runtime with `facebook/opt-125m`.
-It does not claim Qwen3.5 support. The Qwen3.5 job needs a newer vLLM build.
-Run the setup test with:
-
-```bash
-sbatch scripts/test_vllm011.sbatch
-```
-
-The small test above checks a tiny OPT model and confirms basic GPU inference.
-To check a supported Qwen architecture, submit the Qwen3-4B test:
-
-```bash
-sbatch scripts/test_qwen3_vllm011.sbatch
-```
-
-The job installs vLLM 0.11.0 and Transformers 4.57.1 in temporary node storage.
-It downloads `Qwen/Qwen3-4B` to your HPC home cache and generates 32 tokens.
-The job log is `qwen3-4b-vllm011-<JOB_ID>.log` in the repository root.
-The test checks Qwen3 support. It does not test Qwen3.5 or reproduce paper results.
-
-## Current status
-
-We did not run the reproduction experiments during repository setup.
-The copied notebooks contain existing outputs from the source copy.
-The source `LLM TREC.ipynb` is incomplete and needs restoration before use.
-The first Qwen3.5 vLLM job used a CUDA 13 wheel on a CUDA 12.9 node and did not start.
-The OPT preflight passed with vLLM 0.11.0 and CUDA 12.8.
-It does not test Qwen3.5. The Qwen3 test uses a supported Qwen model instead.
+ITU forbids package managers (`pip`, `uv`, `conda`) on the main login node.
+ITU also forbids VS Code Remote, Jupyter and other interactive tools there.
+ITU restricted an account for this in October 2026.
+Use the login node only to edit files and to run `sbatch`, `squeue` and `sinfo`.
+Run installs, model downloads and model servers only inside Slurm jobs.
+See [AGENTS.md](AGENTS.md) for the rules that agents follow.
 
 ## Sources
 
@@ -118,4 +66,4 @@ It does not test Qwen3.5. The Qwen3 test uses a supported Qwen model instead.
 - [Original NEC license](sensitivity-consistency-LLM/LICENSE.txt)
 
 NEC Laboratories Europe GmbH developed the original software.
-The [reproduction guide](docs/reproduction-guide.md#source-and-attribution) records the source commit.
+The [reproduction guide](docs/reproduction-guide.md#paper-and-code) records the source commit.

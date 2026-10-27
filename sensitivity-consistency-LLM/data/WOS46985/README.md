@@ -11,8 +11,6 @@ The 7-class Web of Science dataset (Kowsari et al.) with 2000 balanced samples. 
 | `X.zip` | 1 file | `2e769e9d3adc` | Zip of `X.txt` made by the authors. Git tracks the zip. |
 | `X.txt` | 46,985 | `82cc4794b577` | One abstract on each line. **Not in git (65 MB).** Run `python3 scripts/fetch_datasets.py` to extract it. |
 | `YL1.txt` | 46,985 | `691872ed9eb0` | **Level-1 label (0 to 6). The notebook reads this file.** |
-| `YL2.txt` | 46,985 | `0d1e3bf61822` | Level-2 label (53 distinct values). Not read. |
-| `Y.txt` | 46,985 | `627d5f638ed4` | Area label (134 distinct values). Not read. |
 | `evaluation_subset_2000.jsonl` | 2000 | `e5c7c63dae07` | **The 2000 evaluated samples**, in the notebook order. |
 | `one_shot_examples.jsonl` | 7 | `9550f2f5b6a4` | The 1-shot examples, one for each class, in class order. |
 | `ReadMe.txt` | | `6da4ab1e624c` | The official readme with the permission notice. Keep it with the data. |
@@ -23,7 +21,8 @@ Records of the two `.jsonl` files: `{"id": ..., "class": ..., "input": ...}`.
 ## Source
 
 - Mendeley Data, "Web of Science Dataset", version 6 (2018-03-15), DOI 10.17632/9rw3vkcfy4.6. File `WebOfScience.zip`, SHA-256 `b787d484bff88b0dcdb3fa291d06ec9d2f025dc2a67ce1045d0c688cd96ccf8a`. This equals the hash that Mendeley lists.
-- `X.txt`, `Y.txt`, `YL1.txt` and `YL2.txt` are byte-identical to the files in `WOS46985/` of that zip.
+- `X.txt` and `YL1.txt` are byte-identical to the files in `WOS46985/` of that zip.
+- We did not copy `Y.txt` (134 area labels) and `YL2.txt` (53 level-2 labels). The notebook does not read them.
 - The zip also has `WOS5736/` and `WOS11967/`. We did not copy them. The paper uses WOS-46985.
 
 ## Classes
@@ -57,7 +56,7 @@ Result:
 - 2000 unique samples. Class counts: Computer Science 286, Electrical Engineering 285, Psychology 286, Mechanical Engineering 285, Civil Engineering 285, Medical Science 287, Biochemistry 286.
 - The 7 1-shot rows have the IDs 46694, 23822, 26312, 16814, 23528, 7204 and 46169 (class order). None is in the evaluated set.
 - `evaluation_subset_2000.jsonl` equals the notebook's `data_list` (checked, same order).
-- The IDs have the SHA-256 `0123a6e1855264f0...` (see `docs/datasets/sample-ids-wos.json`).
+- The IDs have the SHA-256 `0123a6e1855264f0...` (printed by `scripts/replay_sampling.py`, stored in `docs/datasets/data-manifest.json`).
 - The same IDs came out on Python 3.10.18, 3.11.13, 3.12.9, 3.13.7 and 3.14.8.
 - The authors' stored notebook output prints the same text at index 1 as our subset (a Biochemistry abstract about "nanoscale spacing between the plasma membrane and ... cortical actin").
 - The abstracts have 190 to 4744 characters (median 1304).

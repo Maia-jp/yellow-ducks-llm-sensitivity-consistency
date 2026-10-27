@@ -10,8 +10,6 @@ The datasets are committed in `sensitivity-consistency-LLM/data/`. Each dataset 
 | File in this folder | Purpose |
 |---|---|
 | `data-manifest.json` | SHA-256 of every data file, its source, and how we compared it with the official source |
-| `sample-ids-dbpedia.json` | The 2000 DBPedia sample IDs that the notebook picks with seed 42 |
-| `sample-ids-wos.json` | The 2000 WoS sample IDs that the notebook picks with seed 42 |
 
 ## Check, restore and rebuild
 
@@ -47,7 +45,7 @@ We got the same IDs on Python 3.10.18, 3.11.13, 3.12.9, 3.13.7 and 3.14.8.
 | Independent mirror: Hugging Face `CogComp/trec`, test split | 500 rows, same order, same coarse labels |
 | Independent mirror: Hugging Face `CogComp/trec`, train split | 5452 rows equal, except line 66 (see below) |
 | The notebooks' own data cells on the committed files | CB 250, RTE 2490, DBPedia 2000, WoS 2000 samples. The DBPedia and WoS results equal the committed subset files in the same order. |
-| TREC recovered notebook loader | 500 test and 5452 train rows |
+| Repaired TREC notebook loader | 500 test and 5452 train rows |
 | Authors' stored notebook output | "Num test examples" is 250 (CB), 2490 (RTE), 2000 (DBPedia), 500 (TREC, paper text). Our counts equal them. |
 | Paper text | TREC Entity samples 46 to 50 are the 5 questions quoted in the paper, in order |
 | Restore test on a damaged copy | All files restored and verified |
@@ -65,7 +63,7 @@ We got the same IDs on Python 3.10.18, 3.11.13, 3.12.9, 3.13.7 and 3.14.8.
 ## Differences we found
 
 - **TREC `train.txt`:** line 66 has U+FFFD where the official latin-1 file has byte `0xF0`. The notebook reads UTF-8, so the authors re-encoded the file. The line is not evaluated. Both TREC files lack the final newline.
-- **TREC notebook:** the upstream file is cut inside an image output. `LLM TREC (recovered).ipynb` keeps the 7 complete cells (loader, prompts, 1-shot examples, grid search). The plot cells after the cut are lost.
+- **TREC notebook:** the upstream file is cut inside an image output. `LLM TREC.ipynb` in this repository is the repaired copy. It keeps the 7 complete cells (loader, prompts, 1-shot examples, grid search). The plot cells after the cut are lost.
 - **DBPedia `test.csv`:** one header line `Class,Title,Text` added to the original file.
 - **RTE:** the paper says "2490 test samples". SuperGLUE RTE has train 2490, validation 277, and test 3000 without labels. The notebook reads `train.jsonl` and its stored output prints `2490`. We use `train.jsonl`.
 - **RTE 1-shot prompt:** example 2 ("kidnappers", "he's been to America") is a CB validation item. It is not an RTE item. This is the authors' code.

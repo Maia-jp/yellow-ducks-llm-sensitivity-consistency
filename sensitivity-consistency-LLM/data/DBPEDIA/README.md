@@ -42,7 +42,7 @@ Result:
 - 2000 unique samples. Each class has 142 to 144 samples. Nine classes got 1 or 2 of the 12 extra rows.
 - The 14 1-shot rows have the IDs 4513, 7360, 11650, 17014, 21220, 29918, 30205, 39512, 43021, 45004, 51301, 58998, 61869 and 67363. None is in the evaluated set.
 - `evaluation_subset_2000.jsonl` equals the notebook's `data_list` (checked, same order). The order matters for `--max-samples` runs.
-- The IDs have the SHA-256 `d80c8cf59cacb7d8...` (see `docs/datasets/sample-ids-dbpedia.json`).
+- The IDs have the SHA-256 `d80c8cf59cacb7d8...` (printed by `scripts/replay_sampling.py`, stored in `docs/datasets/data-manifest.json`).
 - The same IDs came out on Python 3.10.18, 3.11.13, 3.12.9, 3.13.7 and 3.14.8.
 - The sample at index 1 (ID 63788) is the "Darkman" film text. The authors' stored notebook output prints the same text at index 1.
 

@@ -9,6 +9,9 @@ Connect from a local development machine to ITU's HPC cluster, verify SSH access
 - Ask the user for their **ITU username**; do not guess it.
 - Never request, store, print, or commit passwords, SSH private keys, or one-time codes. Authentication must occur interactively via the user's terminal or approved SSH agent.
 - Do not run CPU/GPU-intensive workloads on the login node (`front`). Submit them through SLURM.
+- **Hard rule:** Never run `pip`, `uv`, `conda`, `mamba` or any package manager on the login node. Never run Jupyter, VS Code Remote or other interactive tools there. ITU restricted the user's account on 2026-10-26 for this. Run installs only inside a SLURM job (`sbatch` or `srun`). See `AGENTS.md` in the project root.
+- Before any remote command, run `echo "${SLURM_JOB_ID:-none}"`. If it prints `none`, you are on the login node.
+- If a command fails with `fork: retry: Resource temporarily unavailable`, stop and tell the user. Do not retry.
 - Do not cancel existing jobs, overwrite remote files, change SSH configuration, or install software without user approval.
 - Run commands incrementally and show the user what will be executed before any remote modifications.
 - Stop and ask for help if SSH authentication fails, if the cluster requires VPN/MFA, or if permissions are denied. The slides do not specify VPN/MFA prerequisites.

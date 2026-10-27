@@ -61,7 +61,7 @@ The paper lists Entity samples 46 to 50: indigo, barometer, giraffe's tongue, tw
 
 ## Notebook
 
-The upstream `LLM TREC.ipynb` is cut inside an image output and is not valid JSON. Use `LLM TREC (recovered).ipynb` in the folder above. It keeps the 7 complete cells. The plot cells after the cut are lost.
+The upstream `LLM TREC.ipynb` is cut inside an image output and is not valid JSON. `LLM TREC.ipynb` in the folder above is our repaired copy. It keeps the 7 complete cells and says so in its first cell. The plot cells after the cut are lost.
 
 ## Citation
 

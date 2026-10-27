@@ -41,7 +41,7 @@ Therefore the authors' run most likely used `train.jsonl`. This is an inference 
 | B: paper text | `test_labeled.jsonl` | The words "250 test samples" | A held-out evaluation |
 
 Run both and label each result with its file name. Do not use option B labels to tune prompts or to choose models.
-`scripts/reproduce_qwen.py` uses option B by default. Use `--input-file sensitivity-consistency-LLM/data/CB/train.jsonl` for option A.
+The unchanged notebook runs option A. To run option B, change `input_file` in the first data cell of `LLM CB.ipynb` to `./data/CB/test_labeled.jsonl`.
 
 ## How `test_labeled.jsonl` is built
 
@@ -51,7 +51,7 @@ Run both and label each result with its file name. Do not use option B labels to
 
 Checks:
 
-- All 250 test rows matched one item each. The counts (113, 16, 121) equal the test split in Table 2 of the CB recast paper. We took that table value from `docs/findings.md` and did not read the paper again.
+- All 250 test rows matched one item each. The counts (113, 16, 121) equal the test split in Table 2 of the CB recast paper. We took that table value from an earlier project note (removed from this branch) and did not read the paper again.
 - The same rule reproduces all 250 train labels and all 56 validation labels.
 - The labels are a reconstruction. No author-provided gold file for the SuperGLUE test split exists.
 

@@ -75,14 +75,6 @@
       "equivalence": "Zip made by the authors. Its X.txt is byte-identical to WOS46985/X.txt in WebOfScience.zip.",
       "used_for": "holds X.txt"
     },
-    "WOS46985/Y.txt": {
-      "sha256": "627d5f638ed48707a914c7cbba9e9cc833e747b76117a559c0bbb759b7b95096",
-      "bytes": 195893,
-      "official": "https://data.mendeley.com/datasets/9rw3vkcfy4/6",
-      "official_sha256": "b787d484bff88b0dcdb3fa291d06ec9d2f025dc2a67ce1045d0c688cd96ccf8a",
-      "equivalence": "Byte-identical to WOS46985/Y.txt in WebOfScience.zip.",
-      "used_for": "not read by the notebook"
-    },
     "WOS46985/YL1.txt": {
       "sha256": "691872ed9eb092024956ad719b49408e095f7752cecb1d7dcd0641af61c18e6a",
       "bytes": 140953,
@@ -90,14 +82,6 @@
       "official_sha256": "b787d484bff88b0dcdb3fa291d06ec9d2f025dc2a67ce1045d0c688cd96ccf8a",
       "equivalence": "Byte-identical to WOS46985/YL1.txt in WebOfScience.zip.",
       "used_for": "7 class labels"
-    },
-    "WOS46985/YL2.txt": {
-      "sha256": "0d1e3bf61822a16d75c6caefaea4a65874a32f9791f9b0d53f488ffe5d3af152",
-      "bytes": 160685,
-      "official": "https://data.mendeley.com/datasets/9rw3vkcfy4/6",
-      "official_sha256": "b787d484bff88b0dcdb3fa291d06ec9d2f025dc2a67ce1045d0c688cd96ccf8a",
-      "equivalence": "Byte-identical to WOS46985/YL2.txt in WebOfScience.zip.",
-      "used_for": "not read by the notebook"
     }
   },
   "derived": {
@@ -116,14 +100,6 @@
       "sha256": "3c77ece9a973a65cc9889bc150291adc145bcc636a721abe48b5b72061ea73be",
       "bytes": 105947,
       "rule": "scripts/prepare_cb_test_labels.py on CB/test.jsonl and CommitmentBank-items.csv. Counts 113 entailment, 16 neutral, 121 contradiction."
-    }
-  },
-  "sampling": {
-    "dbpedia": {
-      "ids_sha256": "d80c8cf59cacb7d82ee59a387645a9ee3a8e0d91d8b500bf6b1be8947e80fb86"
-    },
-    "wos": {
-      "ids_sha256": "0123a6e1855264f051c983924191e42dfbfb7cea907f0db6ca53f98e9fba8c0f"
     }
   },
   "data_dir": "sensitivity-consistency-LLM/data",
@@ -162,5 +138,10 @@
       "member": "dbpedia_csv/readme.txt",
       "archive_sha256": "42db5221ddedddb673a4cabcc5f3a7d869714c878bcfe4ba94b29d14aa38e417"
     }
+  },
+  "sampling_ids_sha256": {
+    "DBPEDIA": "d80c8cf59cacb7d8",
+    "WOS46985": "0123a6e1855264f0",
+    "note": "First 16 hex characters of the SHA-256 of json.dumps(list of sample ids). Printed by scripts/replay_sampling.py."
   }
 }

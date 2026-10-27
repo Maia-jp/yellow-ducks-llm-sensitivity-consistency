@@ -1,179 +1,151 @@
-# Yellow Ducks: LLM Sensitivity and Consistency
+# Reproduction guide
 
-This project reproduces selected results from the NAACL 2025 paper, [What Did I Do Wrong? Quantifying LLMs’ Sensitivity and Consistency to Prompt Engineering](https://aclanthology.org/2025.naacl-long.73/).
-
-The main goal is to reproduce the Mixtral-8x7B-Instruct-v0.1 results. The second goal is to compare them with a smaller model. We will report measured results after we run the experiments. The values in this file come from the paper and serve as reference values.
-
-## Group
-
-Yellow Ducks (student-organized)
+This guide explains how to replicate the experiments of
+[What Did I Do Wrong? Quantifying LLMs’ Sensitivity and Consistency to Prompt Engineering](https://aclanthology.org/2025.naacl-long.73/) (NAACL 2025).
+This branch holds the foundation: the paper's code, the verified datasets, and the reference values. It holds no model results yet.
 
 ## Paper and code
 
-- [Paper PDF](paper.pdf)
-- [Paper page](https://aclanthology.org/2025.naacl-long.73/)
-- [Paper DOI](https://doi.org/10.18653/v1/2025.naacl-long.73)
-- [Official PDF](https://aclanthology.org/2025.naacl-long.73.pdf)
-- [BibTeX reference](references.bib)
-- [Original code repository](https://github.com/nec-research/sensitivity-consistency-LLM)
+- [Paper PDF](paper.pdf), [BibTeX](references.bib), [DOI](https://doi.org/10.18653/v1/2025.naacl-long.73)
+- Original code: https://github.com/nec-research/sensitivity-consistency-LLM
+- Our copy of the code: [../sensitivity-consistency-LLM/](../sensitivity-consistency-LLM/). It comes from commit
+  [`657355688d4b58a6e3a2ac20484518c5d402c8d8`](https://github.com/nec-research/sensitivity-consistency-LLM/tree/657355688d4b58a6e3a2ac20484518c5d402c8d8).
+  NEC Laboratories Europe GmbH developed it. The [NEC license](../sensitivity-consistency-LLM/LICENSE.txt) applies.
+- One change to the code: `LLM TREC.ipynb` is a repaired copy, because the upstream file is cut and is not valid JSON.
 
-The repository contains five notebooks. Each notebook runs one dataset: TREC, CommitmentBank (CB), RTE, DBPedia, or Web of Science (WoS). The notebook files contain the dataset examples and the analysis code.
+The notebooks contain the authors' outputs from 2024-08. Those outputs are not results from our runs.
 
-## Source and attribution
+## What the paper runs
 
-NEC Laboratories Europe GmbH developed the original software.
-The source copy comes from commit
-[`657355688d4b58a6e3a2ac20484518c5d402c8d8`](https://github.com/nec-research/sensitivity-consistency-LLM/tree/657355688d4b58a6e3a2ac20484518c5d402c8d8).
-This repository also includes our project README, paper copy, and HPC instructions.
-The original software retains its [NEC license](../sensitivity-consistency-LLM/LICENSE.txt).
+| Item | Paper value |
+|---|---|
+| Datasets | TREC, CB, RTE, DBPedia, WoS-46985 |
+| Open models | Llama-3-70B-Instruct and Mixtral-8x7B-Instruct-v0.1 |
+| Closed models | GPT-3.5-turbo-0125 and GPT-4o-2024-08-06 (not needed for our work) |
+| Prompt strategies | Simple, Detail (notebook name `instruct`), 1-shot (notebook name `fewshot`) |
+| Prompt variants | Q = 30 rephrasings of the task description, one answer for each prompt |
+| Temperature | 0 for the rephrasing LLM and the answering LLM |
+| Seed | 42 for requests at temperature 0 |
+| Hardware in the paper | 4 Tesla V100 GPUs (32 GB each) |
 
-The copied notebooks contain existing outputs. Those outputs are not results from our reproduction runs.
-Record our measured results in the results log after each full run.
+## Datasets
 
-## HPC access
+The data is in `sensitivity-consistency-LLM/data/`. Each dataset folder has a `README.md`.
+Read the [data index](../sensitivity-consistency-LLM/data/README.md) first. The full check against the official sources is in [datasets/README.md](datasets/README.md).
 
-Connect to the ITU VPN. From the repository root, start the shared SSH connection:
+| Dataset | Paper | What the notebook evaluates | Cut |
+|---|---|---|---|
+| TREC | 500 test | `TREC/test.txt`, 500 rows | none |
+| CB | 250 test | `CB/train.jsonl`, 250 rows (see the CB split note) | none |
+| RTE | 2490 test | `RTE/train.jsonl`, 2490 rows | none |
+| DBPedia | 2000 balanced test | 2000 of 70,000 rows | seed 42 |
+| WoS | 2000 balanced | 2000 of 46,985 rows | seed 42 |
+
+Check the data before every run (on ITU HPC, run it with `srun` or `sbatch`, never on the login node):
 
 ```bash
-./scripts/connect-hpc.sh
+python3 scripts/fetch_datasets.py --verify-only
+python3 scripts/fetch_datasets.py                 # restore damaged files, extract WOS46985/X.txt
 ```
 
-Enter your password in the terminal. Keep the connection open while the agent uses HPC.
-See the [SSH instructions](hpc/shared-ssh.md) and [HPC setup guide](hpc/agent-setup.md).
-Submit computation through SLURM, the cluster job scheduler.
+**CB split.** The paper says "250 test samples". The released notebook reads `train.jsonl`. The official test file has no labels, so the paper's CB numbers most likely come from `train.jsonl`.
+Run CB on `train.jsonl` to compare with Table 1. Run it on `test_labeled.jsonl` (labels rebuilt from the original annotations) for a held-out test.
+Do not use `test_labeled.jsonl` to tune prompts or to choose models. See [CB/README.md](../sensitivity-consistency-LLM/data/CB/README.md).
 
 ## Metrics
 
-- **Sensitivity** measures how much a model changes its class predictions across prompt rephrasings. Lower values mean less change.
+- **Sensitivity** measures how much a model changes its class predictions across prompt rephrasings. Lower values mean less change. The notebooks print it as "Avg Entropy over samples".
 - **Consistency** measures how similar the model's prediction distributions are for examples in the same class. Higher values mean more similarity.
 - **Micro-F1** measures classification performance across all examples. Higher values mean better performance.
 
-Sensitivity and consistency measure different behavior. Compare both with Micro-F1.
+## Reference results (paper, Table 1)
 
-## Reference results for Mixtral
+Each cell is Sensitivity / Consistency / Micro-F1. Compare all three metrics.
 
-The paper reports sensitivity, consistency, and Micro-F1 for each dataset and prompt strategy. Use these values to compare your output. Small differences can occur because of model versions, server settings, and response behavior.
+**Mixtral-8x7B-Instruct-v0.1**
 
-| Dataset | Simple: S / C / F1 | Detail: S / C / F1 | 1-shot: S / C / F1 |
-|---|---:|---:|---:|
+| Dataset | Simple | Detail | 1-shot |
+|---|---|---|---|
 | TREC | 0.223 / 0.657 / 0.736 | 0.182 / 0.709 / 0.728 | 0.166 / 0.640 / 0.744 |
-| CB | 0.203 / 0.625 / 0.672 | 0.013 / 0.695 / 0.788 | 0.017 / 0.600 / 0.652 |
+| CB | 0.203 / 0.625 / 0.672 | 0.013 (see note) / 0.695 / 0.788 | 0.017 (see note) / 0.600 / 0.652 |
 | RTE | 0.195 / 0.669 / 0.814 | 0.176 / 0.676 / 0.756 | 0.046 / 0.754 / 0.847 |
 | DBPedia | 0.053 / 0.802 / 0.804 | 0.054 / 0.808 / 0.862 | 0.069 / 0.773 / 0.819 |
 | WoS | 0.112 / 0.483 / 0.606 | 0.124 / 0.469 / 0.599 | 0.142 / 0.472 / 0.566 |
 
-Here, `S` means sensitivity, `C` means consistency, and `F1` means Micro-F1. The paper uses 30 prompt variants, temperature 0, and seed 42.
+**Llama-3-70B-Instruct**
 
-## CommitmentBank test data
+| Dataset | Simple | Detail | 1-shot |
+|---|---|---|---|
+| TREC | 0.127 / 0.693 / 0.848 | 0.141 / 0.694 / 0.824 | 0.095 / 0.686 / 0.846 |
+| CB | 0.018 / 0.956 / 0.920 | 0.016 / 0.963 / 0.924 | 0.014 / 0.962 / 0.936 |
+| RTE | 0.157 / 0.701 / 0.569 | 0.213 / 0.727 / 0.509 | 0.048 / 0.755 / 0.818 |
+| DBPedia | 0.018 / 0.932 / 0.948 | 0.058 / 0.901 / 0.740 | 0.030 / 0.924 / 0.827 |
+| WoS | 0.043 / 0.479 / 0.627 | 0.034 / 0.480 / 0.623 | 0.030 / 0.468 / 0.580 |
 
-The CB files, the labeled test file and the explanation are now committed. See [CB/README.md](../sensitivity-consistency-LLM/data/CB/README.md) and run `python3 scripts/fetch_datasets.py` to check or rebuild them. The download commands below show how we built the labeled file first.
+**Notes on Table 1** (checked on 2026-10-27, see [datasets/README.md](datasets/README.md)):
 
-The paper reports 250 CB test examples ([paper, Section 4](https://aclanthology.org/2025.naacl-long.73.pdf)).
-The released CB notebook reads `train.jsonl`.
-The official SuperGLUE test file has no labels, so the notebook cannot calculate Micro-F1 or class-based consistency from that file.
-
-The [original CB data](https://github.com/mcdm/CommitmentBank) includes annotator responses for each item.
-The published [recast rule](https://aclanthology.org/D19-1630.pdf) maps at least 80% agreement to entailment, neutral, or contradiction.
-The preparation script matches test examples to these annotations and applies this rule.
-It writes `test_labeled.jsonl` and leaves the source files unchanged.
-
-On the pinned source files, the script matched all 250 test examples.
-It produced 113 entailment, 16 neutral, and 121 contradiction labels.
-These counts match the CB paper's test split table.
-The same rule reproduces all labels in the official train and validation files.
-
-Run these commands from the repository root:
-
-```bash
-mkdir -p sensitivity-consistency-LLM/data/CB
-curl -fsSLo sensitivity-consistency-LLM/data/CB/test.jsonl \
-  https://raw.githubusercontent.com/nec-research/sensitivity-consistency-LLM/657355688d4b58a6e3a2ac20484518c5d402c8d8/data/CB/test.jsonl
-curl -fsSLo sensitivity-consistency-LLM/data/CommitmentBank-items.csv \
-  https://raw.githubusercontent.com/mcdm/CommitmentBank/14ea91f56e3575b011d28fca5c37a1f5e92769b7/CommitmentBank-items.csv
-python3 scripts/prepare_cb_test_labels.py \
-  --test-jsonl sensitivity-consistency-LLM/data/CB/test.jsonl \
-  --items-csv sensitivity-consistency-LLM/data/CommitmentBank-items.csv \
-  --output-jsonl sensitivity-consistency-LLM/data/CB/test_labeled.jsonl
-```
-
-The CB HPC runner uses `test_labeled.jsonl` by default.
-Submit the full run with `sbatch --export=ALL,DATASET=cb scripts/qwen35_reproduce.sbatch`.
-Use `SMOKE=1` for a two-example setup check.
-Do not use recovered test labels to select models or tune prompts.
-
-The labels come from original public annotations, not an author-provided SuperGLUE gold-label file.
-The published class counts and every available train and validation label match.
-See the dated evidence log in [findings.md](findings.md#cb-split-finding).
+- The notebooks keep the authors' stored sensitivity values. 45 of 48 values match Table 1 within 0.001. TREC has no stored output because its notebook is cut.
+- **CB, Mixtral, Detail and 1-shot:** the stored values are 0.1255 and 0.1740, not 0.013 and 0.017. Appendix D of the paper gives a standard deviation of 0.188 for both cells. A value between 0 and 1 with mean 0.013 cannot have that deviation. Table 1 most likely has a decimal error. **Use 0.125 and 0.174 as the target.**
+- **WoS, Llama3, 1-shot:** the stored value is 0.0353 and Table 1 says 0.030. We have no explanation.
+- The paper's rows for GPT-3.5 and GPT-4o are in the paper. We do not reproduce them.
 
 ## Setup
 
-From the repository root, enter the code directory before you run the setup commands:
+Run these commands from `sensitivity-consistency-LLM/`. The code needs Python 3.10 and an OpenAI-compatible model server (vLLM or another).
 
-```bash
-cd sensitivity-consistency-LLM
-```
-
-The code expects Python 3.10 and an OpenAI-compatible model server. The server can run with vLLM, Ollama, or another compatible service. The repository sets the API key to `EMPTY`. Set a key in `util.py` if your server requires one.
-
-1. Create and activate a virtual environment:
+1. Create an environment and install the pinned packages (`requirements.txt`: langchain 0.2.3, ray 2.6.3, numpy 1.25.2, pandas 2.2.2, scikit-learn 1.3.0, and others):
 
    ```bash
    python3.10 -m venv .venv/llm
    source .venv/llm/bin/activate
-   ```
-
-2. Install the packages:
-
-   ```bash
    pip install -r requirements.txt
    ```
 
-3. Start a server with the Mixtral-8x7B-Instruct-v0.1 model.
+   On ITU HPC, run this inside a Slurm job (`sbatch` or `srun`). ITU forbids `pip` on the login node.
+2. Serve the model. The code uses the model name `mixtral` for Mixtral-8x7B-Instruct-v0.1.
+   The Llama entry uses the model name `llama3instruct` and the stop token ID 128009.
+3. Set `MIXTRAL_openai_api_base` (and `LLAMA3_openai_api_base` for Llama) in `constants.py`. Both are `"INSERT HERE"` now.
+4. Check the data (see Datasets).
+5. Open the notebook of one dataset. In the grid-search cell set `llms = ['mixtral']`. The notebooks default to `['llama3', 'mixtral']`.
+6. Run the cells in order.
 
-4. Set `MIXTRAL_openai_api_base` in `constants.py` to the server's API base URL.
-
-5. Start Jupyter and open the dataset notebook that you want to run:
-
-   ```bash
-   jupyter notebook
-   ```
-
-6. Run the notebook cells in order. Set `llms = ['mixtral']` in the grid-search cell to run Mixtral only.
-
-The notebooks set the experiment to 30 prompt variants and one answer per prompt. They also set both temperatures to 0. The code uses seed 42 for zero-temperature requests. The evaluator uses Ray to run sample jobs in parallel. A full run makes many model requests and can take a long time.
+The notebooks set `Qs = [30]`, `As = [1]`, and both temperatures to 0. Requests at temperature 0 send `seed: 42`.
+The evaluator runs sample jobs in parallel with Ray. A full run makes many model requests and takes a long time.
 
 ## Run plan
 
-The current source copy of `LLM TREC.ipynb` is truncated and is not valid notebook JSON.
-The same error exists in source commit `657355688d4b58a6e3a2ac20484518c5d402c8d8`.
-Restore a complete TREC notebook before you follow this run plan.
-The other four notebooks passed JSON parsing. We did not run their experiments during repository setup.
+1. Start with TREC (500 samples). Run the full dataset before you start the other four. Do not report a partial run as a full reproduction.
+2. Run CB on both files (see the CB split above) and label each result with the file name.
+3. Run RTE, DBPedia and WoS.
+4. Compare Sensitivity, Consistency and Micro-F1 with Table 1 and its notes.
 
-Start with the TREC notebook. It has 500 test examples and fewer examples than RTE, DBPedia, or WoS. Run the full TREC dataset before you start all five datasets. Do not report a partial run as a full reproduction.
+Rules for a clean run:
 
-To reduce run time during setup, copy a notebook and use a small sample or fewer prompt variants. Label those results as a smoke test. They do not reproduce the paper's full evaluation.
-
-The evaluator saves intermediate outputs in each notebook's results folder. Keep these files to resume a stopped run. Remove them only when you want to start that experiment again.
-
-## Smaller model comparison
-
-Use **Llama 3.2 3B Instruct** as the smaller model. It is much smaller than Mixtral-8x7B and uses the Llama 3 prompt format. This makes it a practical local comparison model. It also shares the Llama family with the paper's Llama 3-70B model.
-
-The current repository supports `mixtral` and `llama3` names in `util.py`. Its `llama3` entry calls the model `llama3instruct` and uses Llama 3 stop token IDs. To run Llama 3.2 3B, serve that model at the Llama API base URL and check that your server accepts the `llama3instruct` model name. Record the actual model name and server settings. Do not label it as the paper's Llama 3-70B model.
-
-Run the same notebook, dataset, prompts, temperatures, seed, and number of prompt variants for both models. Change the notebook's `llms` list to `['llama3']` for the smaller model. Compare all three metrics. Do not expect matching values because the model weights differ.
+- Delete any `data/*_RESULTS/` folder from an older run. The notebooks reuse `data/<DATASET>_RESULTS/data.json` (the sampled data). The evaluator reuses `results_<prompt>.json` in that folder to resume a stopped run.
+- Keep the result files of a finished run. Remove them only to start that experiment again.
+- A smoke test (a small sample or fewer prompt variants) does not reproduce the paper. Label it as a smoke test.
+- The TREC notebook has no plot cells after the grid search (they were lost). Compute the metrics from the saved result files, or copy the plot cells from another notebook (we did not test this).
 
 ## Results log
 
-Add the measured values after each full run. Include the dataset, model name and version, prompt strategy, sensitivity, consistency, Micro-F1, run date, and server settings.
+Add the measured values after each full run. Include the dataset, the data file, the model name and version, the prompt strategy, the three metrics, the run date and the server settings.
 
-| Dataset | Model and version | Strategy | Sensitivity | Consistency | Micro-F1 | Notes |
-|---|---|---|---:|---:|---:|---|
-| | | | | | | |
+| Dataset | Data file | Model and version | Strategy | Sensitivity | Consistency | Micro-F1 | Notes |
+|---|---|---|---|---:|---:|---:|---|
+| | | | | | | | |
 
 ## Limits
 
-The paper describes its evaluation as a demonstration, not a broad benchmark. The smaller-model comparison is an extension. Report model and server settings so readers can interpret differences.
+- The paper calls its evaluation a demonstration, not a broad benchmark.
+- Mixtral and Llama-3-70B need large GPU memory. The paper used 4 V100 GPUs with 32 GB each.
+- Differences from Table 1 can come from the model version, the server and its settings, and the model's response behavior.
+- The CB test labels are a reconstruction from public annotations. They are not an official file.
+- We did not run any model for this foundation. All checks in this repository concern the data.
+
+## HPC
+
+See [hpc/shared-ssh.md](hpc/shared-ssh.md) and [hpc/agent-setup.md](hpc/agent-setup.md). The rules for ITU HPC are in [../AGENTS.md](../AGENTS.md):
+use `srun` or `sbatch` for every install, download and model job. Never use the login node for them.
 
 ## Citation
 

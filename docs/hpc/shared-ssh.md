@@ -22,3 +22,9 @@ The agent can use this command to check access:
 ```bash
 ssh -S ~/.ssh/itu-hpc-control -o BatchMode=yes s25441@hpc.itu.dk hostname
 ```
+
+## Rules for the shared connection
+
+Use the shared connection to inspect files and to run `sbatch`, `squeue` and `sinfo`.
+Do not run `pip`, `uv`, `conda`, Jupyter, VS Code Remote or vLLM on the login node. ITU forbids this.
+Stop and tell the user if a command fails with `fork: retry: Resource temporarily unavailable`.
