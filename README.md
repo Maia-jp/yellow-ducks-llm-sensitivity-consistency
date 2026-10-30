@@ -14,7 +14,7 @@ It holds no model results. Experiments with other models belong on separate bran
 | [sensitivity-consistency-LLM/](sensitivity-consistency-LLM/README.md) | The paper's Python code, five notebooks, pinned dependencies, and the NEC license |
 | [sensitivity-consistency-LLM/data/](sensitivity-consistency-LLM/data/README.md) | The five datasets, the 2000-sample subsets, and one explanation file for each dataset |
 | [docs/](docs/README.md) | Paper, citation, reproduction guide, dataset checks, and HPC instructions |
-| [scripts/](scripts/) | Dataset tools and the shared HPC SSH script |
+| [scripts/](scripts/) | Dataset tools |
 
 ## Start
 
@@ -43,13 +43,8 @@ Two points to know before you run an experiment:
 
 ## ITU HPC
 
-For HPC access, connect to the ITU VPN. From this repository root, run:
-
-```bash
-./scripts/connect-hpc.sh
-```
-
-See the [shared SSH instructions](docs/hpc/shared-ssh.md) and the [HPC setup guide](docs/hpc/agent-setup.md).
+Connect to the cluster with `ssh s25441@hpc3.itu.dk`. This account needs no password.
+See the [HPC setup guide](docs/hpc/agent-setup.md). We did not test it on `hpc3` yet.
 
 ITU forbids package managers (`pip`, `uv`, `conda`) on the main login node.
 ITU also forbids VS Code Remote, Jupyter and other interactive tools there.

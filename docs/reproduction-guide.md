@@ -144,7 +144,7 @@ Add the measured values after each full run. Include the dataset, the data file,
 
 ## HPC
 
-See [hpc/shared-ssh.md](hpc/shared-ssh.md) and [hpc/agent-setup.md](hpc/agent-setup.md). The rules for ITU HPC are in [../AGENTS.md](../AGENTS.md):
+See [hpc/agent-setup.md](hpc/agent-setup.md). Access: `ssh s25441@hpc3.itu.dk` (no password). The rules for ITU HPC are in [../AGENTS.md](../AGENTS.md):
 use `srun` or `sbatch` for every install, download and model job. Never use the login node for them.
 
 ## Citation

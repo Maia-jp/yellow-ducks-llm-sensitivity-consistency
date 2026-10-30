@@ -6,10 +6,9 @@ If a task needs a rule to be broken, stop and ask the user first.
 
 ## ITU HPC cluster: hard rules
 
-ITU HPC (`hpc.itu.dk`) restricted the user's account on 2026-10-26.
-The cause: someone ran `pip` on the main login node. The Terms of Use forbid this.
-After the restriction, the login shell could not start any command (`ulimit -Hu` = 2).
-A person at ITU must remove the restriction. An agent cannot fix it.
+Access: `ssh s25441@hpc3.itu.dk` (no password).
+ITU forbids package managers and interactive tools on the login node. The Terms of Use say so.
+A `pip` run on a login node already led to an account restriction on 2026-10-26. An agent cannot undo such a restriction.
 
 1. **The login node is for light work only.** Allowed: `ls`, `cat`, `sbatch`, `squeue`, `sinfo`, `scancel` (with approval), file edits and `scp`.
 2. **Never run a package manager on the login node.** This includes `pip`, `pip3`, `python -m pip`, `uv`, `conda`, `mamba` and `npm`.
@@ -29,5 +28,4 @@ Write "run this with `srun` or `sbatch`", never "run this on HPC".
 ## Source of the rules
 
 - ITU HPC email to the user, 2026-10-26: "It is forbidden to use package managers like pip, conda etc. on the main login-node as well as to login with Vscode, Jupyter and other interactive tools."
-- ITU HPC documentation: https://hpc.itu.dk
-- Existing setup guide: `yellow-ducks-llm-sensitivity-consistency/docs/hpc/agent-setup.md`
+- Existing setup guide: `docs/hpc/agent-setup.md`
