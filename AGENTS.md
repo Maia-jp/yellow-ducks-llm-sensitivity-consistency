@@ -25,7 +25,14 @@ A `pip` run on a login node already led to an account restriction on 2026-10-26.
 When you write instructions, scripts or README steps for HPC, apply the same rules.
 Write "run this with `srun` or `sbatch`", never "run this on HPC".
 
+## Jobs and environments
+
+Before you write, change or submit any Slurm job, or create a Python environment on the cluster, read `docs/hpc/jobs-and-environments.md`.
+It explains how jobs work, how to build environments (conda module, own Miniconda, `/scratch`), the job file pattern, and the rules for agents.
+Read it when the task needs it. Do not load it for other tasks.
+
 ## Source of the rules
 
 - ITU HPC email to the user, 2026-10-26: "It is forbidden to use package managers like pip, conda etc. on the main login-node as well as to login with Vscode, Jupyter and other interactive tools."
 - Existing setup guide: `docs/hpc/agent-setup.md`
+- Job and environment guide (ITU slides, September 2026): `docs/hpc/jobs-and-environments.md`

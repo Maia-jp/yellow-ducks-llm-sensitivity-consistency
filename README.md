@@ -44,7 +44,7 @@ Two points to know before you run an experiment:
 ## ITU HPC
 
 Connect to the cluster with `ssh s25441@hpc3.itu.dk`. This account needs no password.
-See the [HPC setup guide](docs/hpc/agent-setup.md). We did not test it on `hpc3` yet.
+See the [HPC setup guide](docs/hpc/agent-setup.md) and the [jobs and environments guide](docs/hpc/jobs-and-environments.md). We did not test them on `hpc3` yet.
 
 ITU forbids package managers (`pip`, `uv`, `conda`) on the main login node.
 ITU also forbids VS Code Remote, Jupyter and other interactive tools there.

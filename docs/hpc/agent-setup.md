@@ -106,7 +106,7 @@ Confirm the destination before you upload anything sensitive.
 
 ## Step 8: Python and GPU jobs
 Check which software the cluster offers before you write a job script. If the cluster uses environment modules, `module avail` lists them. Request a GPU only for a real workload, and only after the user approves the resources. Put `--gres` before `--partition` if the cluster requires that order.
-Install Python packages only inside a Slurm job.
+Install Python packages only inside a Slurm job. See [jobs-and-environments.md](jobs-and-environments.md) for the job file pattern and for how to build environments.
 
 ## Step 9: Report back
 Tell the user:
