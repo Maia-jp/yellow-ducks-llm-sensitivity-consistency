@@ -22,3 +22,7 @@ results/
 
 # Derived from WOS46985/X.zip. Run scripts/fetch_datasets.py to extract it (65 MB).
 sensitivity-consistency-LLM/data/WOS46985/X.txt
+
+# Slurm logs of the Qwen jobs (jobs/qwen3.5-27b/)
+qwen27b-*.out
+qwen27b-*.err
