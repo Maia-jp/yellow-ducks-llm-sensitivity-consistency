@@ -1,0 +1,147 @@
+{
+  "description": "Pinned data files for the sensitivity-consistency reproduction. All paths are relative to data_dir. Checked against the official sources on 2026-10-27 (see docs/datasets/README.md).",
+  "upstream_commit": "657355688d4b58a6e3a2ac20484518c5d402c8d8",
+  "upstream_raw_base": "https://raw.githubusercontent.com/nec-research/sensitivity-consistency-LLM/657355688d4b58a6e3a2ac20484518c5d402c8d8/data/",
+  "files": {
+    "TREC/train.txt": {
+      "sha256": "202e3e1ad6143ed4f147f199324277e25b2573a78c08c3af1ff840b49c0779de",
+      "bytes": 335859,
+      "official": "https://cogcomp.seas.upenn.edu/Data/QA/QC/train_5500.label",
+      "official_sha256": "9e4c8bdcaffb96ed61041bd64b564183d52793a8e91d84fc3a8646885f466ec3",
+      "equivalence": "Same 5452 lines. Line 66 has U+FFFD where the official latin-1 file has byte 0xF0. No final newline.",
+      "used_for": "1-shot examples only"
+    },
+    "TREC/test.txt": {
+      "sha256": "69b2d406aa15b3b514b6bf9b3bf1fa2c3515ce7ae744651173f8e57347bfb2a9",
+      "bytes": 23353,
+      "official": "https://cogcomp.seas.upenn.edu/Data/QA/QC/TREC_10.label",
+      "official_sha256": "033f22c028c2bbba9ca682f68ffe204dc1aa6e1cf35dd6207f2d4ca67f0d0e8e",
+      "equivalence": "Same 500 lines. Only the final newline is missing.",
+      "used_for": "evaluation (500 samples)"
+    },
+    "RTE/train.jsonl": {
+      "sha256": "fdfb03443abe3ec0424b7fc5d1a8863361719bc061338b7a63e56b94d615f201",
+      "bytes": 977550,
+      "official": "https://dl.fbaipublicfiles.com/glue/superglue/data/v2/RTE.zip",
+      "official_sha256": "6310aab3f000424c9d0318a1ff20692e07c7f4aa15e8f17a5972ea0a35c398b9",
+      "equivalence": "Byte-identical to train.jsonl in RTE.zip.",
+      "used_for": "evaluation (2490 samples)"
+    },
+    "CB/train.jsonl": {
+      "sha256": "32017480d3a10508646e3efd64502c639f13d4d15077f278d2fd0992c33a3126",
+      "bytes": 99499,
+      "official": "https://dl.fbaipublicfiles.com/glue/superglue/data/v2/CB.zip",
+      "official_sha256": "8d641383298d54554066ba1c93f56ae7410af75df621b90c63028806bbbbb535",
+      "equivalence": "Byte-identical to train.jsonl in CB.zip.",
+      "used_for": "evaluation in the released notebook (250 samples)"
+    },
+    "CB/val.jsonl": {
+      "sha256": "c6125587e9601560cb16ea223c33964c5a915568d2af68a81f651b6ef25395ec",
+      "bytes": 24598,
+      "official": "https://dl.fbaipublicfiles.com/glue/superglue/data/v2/CB.zip",
+      "official_sha256": "8d641383298d54554066ba1c93f56ae7410af75df621b90c63028806bbbbb535",
+      "equivalence": "Byte-identical to val.jsonl in CB.zip.",
+      "used_for": "source of the 1-shot examples"
+    },
+    "CB/test.jsonl": {
+      "sha256": "860679c4ef6f56758f5530bfbcbf2fd7905667184144f3594ace9bb4c435618d",
+      "bytes": 99881,
+      "official": "https://dl.fbaipublicfiles.com/glue/superglue/data/v2/CB.zip",
+      "official_sha256": "8d641383298d54554066ba1c93f56ae7410af75df621b90c63028806bbbbb535",
+      "equivalence": "Byte-identical to test.jsonl in CB.zip. No labels.",
+      "used_for": "input of prepare_cb_test_labels.py"
+    },
+    "DBPEDIA/test.csv": {
+      "sha256": "1f91caaf162f3f591868f7d873c8858c5a6d20d1795a63961f82189b3e64a99d",
+      "bytes": 21775302,
+      "official": "https://s3.amazonaws.com/fast-ai-nlp/dbpedia_csv.tgz",
+      "official_sha256": "42db5221ddedddb673a4cabcc5f3a7d869714c878bcfe4ba94b29d14aa38e417",
+      "equivalence": "All 70000 rows equal dbpedia_csv/test.csv. One header line added (Class,Title,Text).",
+      "used_for": "evaluation (2000 balanced samples)"
+    },
+    "DBPEDIA/classes.txt": {
+      "sha256": "3390a11cf615554211a10dfcc4f807d25bc0293cbb6e62e913c16c2281e7a02c",
+      "bytes": 146,
+      "official": "https://s3.amazonaws.com/fast-ai-nlp/dbpedia_csv.tgz",
+      "official_sha256": "42db5221ddedddb673a4cabcc5f3a7d869714c878bcfe4ba94b29d14aa38e417",
+      "equivalence": "Identical to dbpedia_csv/classes.txt.",
+      "used_for": "documentation only"
+    },
+    "WOS46985/X.zip": {
+      "sha256": "2e769e9d3adcb5109f42be908a85a402b06742ccf755a8e3db6ba8766fa509dd",
+      "bytes": 22317202,
+      "official": "https://data.mendeley.com/datasets/9rw3vkcfy4/6",
+      "official_sha256": "b787d484bff88b0dcdb3fa291d06ec9d2f025dc2a67ce1045d0c688cd96ccf8a",
+      "equivalence": "Zip made by the authors. Its X.txt is byte-identical to WOS46985/X.txt in WebOfScience.zip.",
+      "used_for": "holds X.txt"
+    },
+    "WOS46985/YL1.txt": {
+      "sha256": "691872ed9eb092024956ad719b49408e095f7752cecb1d7dcd0641af61c18e6a",
+      "bytes": 140953,
+      "official": "https://data.mendeley.com/datasets/9rw3vkcfy4/6",
+      "official_sha256": "b787d484bff88b0dcdb3fa291d06ec9d2f025dc2a67ce1045d0c688cd96ccf8a",
+      "equivalence": "Byte-identical to WOS46985/YL1.txt in WebOfScience.zip.",
+      "used_for": "7 class labels"
+    }
+  },
+  "derived": {
+    "WOS46985/X.txt": {
+      "sha256": "82cc4794b57795cb548f751aeb2efb500e77b9440be705c410e7a59b42e02ce2",
+      "bytes": 64766930,
+      "rule": "Unzip WOS46985/X.zip. Equals X.txt in the official WebOfScience.zip."
+    },
+    "CommitmentBank-items.csv": {
+      "url": "https://raw.githubusercontent.com/mcdm/CommitmentBank/14ea91f56e3575b011d28fca5c37a1f5e92769b7/CommitmentBank-items.csv",
+      "sha256": "e06d30b2e197fe88b9917c049c534df74d35d37eddb2a55f6e7112c56e016401",
+      "bytes": 591701,
+      "rule": "Original CB annotations at a pinned commit."
+    },
+    "CB/test_labeled.jsonl": {
+      "sha256": "3c77ece9a973a65cc9889bc150291adc145bcc636a721abe48b5b72061ea73be",
+      "bytes": 105947,
+      "rule": "scripts/prepare_cb_test_labels.py on CB/test.jsonl and CommitmentBank-items.csv. Counts 113 entailment, 16 neutral, 121 contradiction."
+    }
+  },
+  "data_dir": "sensitivity-consistency-LLM/data",
+  "subsets": {
+    "DBPEDIA/evaluation_subset_2000.jsonl": {
+      "sha256": "473df6c29ee5aaf09e39104048e6cab7abeef2ba16906d009f0a2d1171ef417b",
+      "bytes": 669810,
+      "rule": "scripts/replay_sampling.py --dataset dbpedia runs the data cell of LLM DBPEDIA.ipynb (random.seed(42), balance_dataset). Same output on Python 3.10 to 3.14."
+    },
+    "DBPEDIA/one_shot_examples.jsonl": {
+      "sha256": "ffddfe55773f7fd145b9c50c3c69e4c41f45ef2c7389366d06fa04dfd3b18eea",
+      "bytes": 5268,
+      "rule": "scripts/replay_sampling.py --dataset dbpedia runs the data cell of LLM DBPEDIA.ipynb (random.seed(42), balance_dataset). Same output on Python 3.10 to 3.14."
+    },
+    "WOS46985/evaluation_subset_2000.jsonl": {
+      "sha256": "e5c7c63dae0708d53bac493c1492d867773b640ec4ed06dc87c13161a62176f8",
+      "bytes": 2768197,
+      "rule": "scripts/replay_sampling.py --dataset wos runs the data cell of LLM WoS.ipynb (random.seed(42), balance_dataset). Same output on Python 3.10 to 3.14."
+    },
+    "WOS46985/one_shot_examples.jsonl": {
+      "sha256": "9550f2f5b6a4f148924bb0936e9269ed27da41762e22f478b9b3f1d965a90933",
+      "bytes": 9659,
+      "rule": "scripts/replay_sampling.py --dataset wos runs the data cell of LLM WoS.ipynb (random.seed(42), balance_dataset). Same output on Python 3.10 to 3.14."
+    }
+  },
+  "supporting": {
+    "WOS46985/ReadMe.txt": {
+      "url": "https://data.mendeley.com/public-files/datasets/9rw3vkcfy4/files/71107966-f10c-4c8b-8269-fb826867c7e8/file_downloaded",
+      "sha256": "6da4ab1e624c4ef61c46600d727770f873ff4db3c15541fb481e7af8a715c0ec",
+      "note": "Official ReadMe of Mendeley Data v6. Holds the permission notice that must stay with copies."
+    },
+    "DBPEDIA/readme.txt": {
+      "url": "https://s3.amazonaws.com/fast-ai-nlp/dbpedia_csv.tgz",
+      "sha256": "b5abe6e8539d6f21ba027450daec0737274b3734264ba133e46cbc9d141bde6e",
+      "note": "readme.txt from dbpedia_csv.tgz (the SHA-256 above is of the member file). States the CC BY-SA and GNU FDL license.",
+      "member": "dbpedia_csv/readme.txt",
+      "archive_sha256": "42db5221ddedddb673a4cabcc5f3a7d869714c878bcfe4ba94b29d14aa38e417"
+    }
+  },
+  "sampling_ids_sha256": {
+    "DBPEDIA": "d80c8cf59cacb7d8",
+    "WOS46985": "0123a6e1855264f0",
+    "note": "First 16 hex characters of the SHA-256 of json.dumps(list of sample ids). Printed by scripts/replay_sampling.py."
+  }
+}
