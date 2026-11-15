@@ -7,7 +7,14 @@
 #
 # Adapted from scripts/hpc/qwen_common.sh (branch qwen3.5-27b-jobs). The
 # environment, lock and dataset steps are the same. The model server is
-# Ollama (ITU module) in place of vLLM.
+# Ollama in place of vLLM.
+#
+# Two kinds of nodes work:
+# - ARM nodes (asus1): the Ollama program of the node, /usr/local/bin/ollama
+#   (version 0.40.4 on 2026-11-15). This is the default of the job files.
+# - x86 nodes with AVX-512: the ITU module ollama/0.6.0 (jobs in x86/).
+# The two Ollama versions are not the same program. A run folder remembers
+# its Ollama version, and a job with another version refuses to continue it.
 #
 # Every step is idempotent. A step that is already done is skipped, so the
 # first job builds the environment and later jobs reuse it.
@@ -27,8 +34,15 @@ CODE_DIR="$REPO_DIR/sensitivity-consistency-LLM"
 PY_DIR="$REPO_DIR/scripts/deepseek"
 LOCK_FILES="$REPO_DIR/jobs/deepseek-r1-7b/locks"
 
+ARCH=${YD_ARCH:-$(uname -m)}  # x86_64 or aarch64
+
 # Override these with sbatch --export=ALL,NAME=value.
-OLLAMA_MODULE=${OLLAMA_MODULE:-ollama/0.6.0-GCCcore-13.3.0-CUDA-12.6.0}
+# OLLAMA_MODULE: a module name, or "system" for the ollama program of the node.
+if [[ $ARCH == aarch64 ]]; then
+    OLLAMA_MODULE=${OLLAMA_MODULE:-system}
+else
+    OLLAMA_MODULE=${OLLAMA_MODULE:-ollama/0.6.0-GCCcore-13.3.0-CUDA-12.6.0}
+fi
 BASE_MODEL=${BASE_MODEL:-deepseek-r1:7b}
 # ID that "ollama list" showed for deepseek-r1:7b on 2026-11-14. The job stops
 # if the tag points to other weights, so every run uses the same model.
@@ -44,13 +58,17 @@ SERVER_START_TIMEOUT=${SERVER_START_TIMEOUT:-600}
 SERVED_MODEL="$MODEL_TAG-ctx$CONTEXT_LENGTH"
 
 UV_VERSION="0.13.6"
-UV_SHA256="f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
+# SHA-256 of the x86_64 archive. For aarch64 the job reads the .sha256 file
+# of the same release and prints the value into the log.
+UV_SHA256_X86_64="f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
 
 # Everything lives under one folder in the home directory.
 # The model is in the Ollama store (default ~/.ollama/models, about 4.7 GB).
 YD_ROOT=${YD_ROOT:-$HOME/yellow-ducks}
-UV_DIR="$YD_ROOT/tools/uv-$UV_VERSION"
-EVAL_ENV="$YD_ROOT/envs/eval-py310"
+# The home folder is the same on all nodes, so programs for the two CPU
+# types get separate folders.
+UV_DIR="$YD_ROOT/tools/uv-$UV_VERSION-$ARCH"
+EVAL_ENV="$YD_ROOT/envs/eval-py310-$ARCH"
 RUNS_DIR="$YD_ROOT/runs/$MODEL_TAG"
 LOCK_DIR="$YD_ROOT/locks"
 
@@ -75,7 +93,9 @@ BASE_LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-}
 HELD_LOCK=""
 SERVER_PID=""
 RUNNER_PID=""
+HEARTBEAT_PID=""
 PORT=""
+OLLAMA_VERSION=""
 
 log() { printf '[%s] %s\n' "$(date '+%F %T')" "$*"; }
 fail() { log "ERROR: $*" >&2; exit 1; }
@@ -92,6 +112,9 @@ cleanup() {
         for _ in $(seq 1 30); do kill -0 "$SERVER_PID" 2>/dev/null || break; sleep 1; done
         kill -9 "$SERVER_PID" 2>/dev/null
     fi
+    if [[ -n $HEARTBEAT_PID ]]; then
+        kill "$HEARTBEAT_PID" 2>/dev/null
+    fi
     if [[ -n $HELD_LOCK ]]; then
         rm -rf "$HELD_LOCK"
     fi
@@ -104,47 +127,81 @@ trap 'exit 143' TERM INT
 
 # ------------------------------------------------------------------- locks ---
 
+# While this job holds a lock, a background loop renews the time stamp of
+# the lock every minute. Nodes without the squeue command (possible on the
+# ARM nodes) use the time stamp to see if the owner of a lock is still alive.
+start_heartbeat() {
+    (
+        while sleep 60; do
+            lock=$(cat "$JOB_TMP/held-lock" 2>/dev/null || true)
+            if [[ -n $lock && -d $lock ]]; then touch "$lock/job" 2>/dev/null || true; fi
+        done
+    ) &
+    HEARTBEAT_PID=$!
+}
+start_heartbeat
+
+hold_lock() {
+    echo "$SLURM_JOB_ID" >"$1/job"
+    HELD_LOCK=$1
+    echo "$1" >"$JOB_TMP/held-lock"
+}
+
+# lock_is_live LOCK: true if the job that made the lock still runs.
+lock_is_live() {
+    local lock=$1 owner
+    owner=$(cat "$lock/job" 2>/dev/null || true)
+    if command -v squeue >/dev/null 2>&1; then
+        [[ -n $owner ]] || return 0  # the owner is just writing its job ID
+        squeue -h -j "$owner" 2>/dev/null | grep -q .
+        return
+    fi
+    # No squeue here: the lock is live if its time stamp is younger than 10 minutes.
+    [[ -n $(find "$lock" -maxdepth 1 -mmin -10 2>/dev/null) ]]
+}
+
 # acquire_lock NAME: wait until no other job builds the same thing.
-# A lock from a job that is no longer in squeue is stale and is removed.
+# A lock from a job that no longer runs is stale and is removed.
 acquire_lock() {
-    local lock="$LOCK_DIR/$1" waited=0 owner
+    local lock="$LOCK_DIR/$1" waited=0
     until mkdir "$lock" 2>/dev/null; do
-        owner=$(cat "$lock/job" 2>/dev/null || true)
-        if [[ -n $owner ]] && ! squeue -h -j "$owner" 2>/dev/null | grep -q .; then
-            log "Removing stale lock $lock from ended job $owner."
+        if ! lock_is_live "$lock"; then
+            log "Removing stale lock $lock from ended job $(cat "$lock/job" 2>/dev/null || echo unknown)."
             rm -rf "$lock"
             continue
         fi
         if (( waited >= 10800 )); then
-            fail "Waited 3 hours for lock $lock (owner job ${owner:-unknown})."
+            fail "Waited 3 hours for lock $lock (owner job $(cat "$lock/job" 2>/dev/null || echo unknown))."
         fi
         if (( waited % 300 == 0 )); then
-            log "Waiting for lock $lock (owner job ${owner:-unknown})."
+            log "Waiting for lock $lock (owner job $(cat "$lock/job" 2>/dev/null || echo unknown))."
         fi
         sleep 30
         waited=$((waited + 30))
     done
-    echo "$SLURM_JOB_ID" >"$lock/job"
-    HELD_LOCK=$lock
+    hold_lock "$lock"
 }
 
 release_lock() {
     rm -rf "$HELD_LOCK"
     HELD_LOCK=""
+    : >"$JOB_TMP/held-lock"
 }
 
 # ------------------------------------------------------------- node facts ---
 
+# Number of GPUs that this job can use. Asks the driver, because the ARM
+# nodes have no Slurm GPU resource (no --gres, no CUDA_VISIBLE_DEVICES).
+# On the other nodes a job without --gres sees no GPU.
 gpu_count() {
-    local devices=${CUDA_VISIBLE_DEVICES:-}
-    [[ -n $devices ]] || { echo 0; return; }
-    awk -F, '{print NF}' <<<"$devices"
+    command -v nvidia-smi >/dev/null 2>&1 || { echo 0; return; }
+    nvidia-smi -L 2>/dev/null | grep -c '^GPU ' || true
 }
 
 report_node() {
-    log "Host: $(hostname). Job: $SLURM_JOB_ID. CPUs: ${SLURM_CPUS_PER_TASK:-?}."
-    log "CPU: $(grep -m 1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//')"
-    log "GPUs given by Slurm: ${CUDA_VISIBLE_DEVICES:-none}."
+    log "Host: $(hostname). Job: $SLURM_JOB_ID. CPUs: ${SLURM_CPUS_PER_TASK:-?}. CPU type: $ARCH."
+    log "CPU: $(grep -m 1 -E 'model name|Model' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//' || true)"
+    log "GPUs given by Slurm: ${CUDA_VISIBLE_DEVICES:-none}. GPUs that the driver shows: $(gpu_count)."
     if command -v nvidia-smi >/dev/null 2>&1; then
         nvidia-smi --query-gpu=index,name,memory.total,memory.used,driver_version --format=csv 2>/dev/null || true
     fi
@@ -158,6 +215,10 @@ report_node() {
 # (for example cn9, AMD EPYC 7643) the model load stops with
 # "SIGILL: illegal instruction" (seen on 2026-11-14). Stop early with a clear text.
 check_cpu() {
+    if [[ $OLLAMA_MODULE == system ]]; then
+        log "CPU check not needed: the job uses the Ollama program of the node."
+        return 0
+    fi
     if [[ ${SKIP_CPU_CHECK:-0} == 1 ]]; then
         log "CPU check skipped (SKIP_CPU_CHECK=1)."
         return 0
@@ -204,13 +265,21 @@ check_disk() {
 
 ensure_uv() {
     [[ -x $UV_DIR/uv ]] && return 0
-    acquire_lock uv
+    acquire_lock "uv-$ARCH"
     if [[ ! -x $UV_DIR/uv ]]; then
-        log "Installing uv $UV_VERSION into $UV_DIR."
-        local archive="$JOB_TMP/uv.tar.gz"
-        curl -fsSL --retry 3 -o "$archive" \
-            "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-x86_64-unknown-linux-gnu.tar.gz"
-        echo "$UV_SHA256  $archive" | sha256sum -c -
+        log "Installing uv $UV_VERSION ($ARCH) into $UV_DIR."
+        local name="uv-$ARCH-unknown-linux-gnu.tar.gz" sha
+        local base="https://github.com/astral-sh/uv/releases/download/$UV_VERSION"
+        local archive="$JOB_TMP/$name"
+        curl -fsSL --retry 3 -o "$archive" "$base/$name"
+        if [[ $ARCH == x86_64 ]]; then
+            sha=$UV_SHA256_X86_64
+        else
+            sha=$(curl -fsSL --retry 3 "$base/$name.sha256" | awk '{print $1}')
+            [[ $sha =~ ^[0-9a-f]{64}$ ]] || fail "Cannot read the SHA-256 of $name from the uv release."
+            log "SHA-256 of $name from the uv release: $sha"
+        fi
+        echo "$sha  $archive" | sha256sum -c -
         rm -rf "$UV_DIR.partial"
         mkdir -p "$UV_DIR.partial"
         tar -xzf "$archive" -C "$UV_DIR.partial" --strip-components=1
@@ -262,10 +331,16 @@ ensure_data() {
 
 # ---------------------------------------------------------- Ollama server ---
 
-# Loads the ITU Ollama module. Lmod scripts use unset variables, so "set -u"
-# is off while they run.
+# Makes the ollama command available: the program of the node
+# (OLLAMA_MODULE=system) or an ITU module. Lmod scripts use unset variables,
+# so "set -u" is off while they run.
 load_ollama() {
     local file ok=0
+    if [[ $OLLAMA_MODULE == system ]]; then
+        command -v ollama >/dev/null 2>&1 || fail "This node has no ollama program. Use a node with Ollama, or set OLLAMA_MODULE to a module name."
+        log "Using the Ollama program of the node: $(command -v ollama)"
+        return 0
+    fi
     set +u
     if ! command -v module >/dev/null 2>&1; then
         for file in /etc/profile.d/lmod.sh /etc/profile.d/z00_lmod.sh /etc/profile.d/modules.sh; do
@@ -290,7 +365,7 @@ free_port() {
 # waits until it answers.
 #
 # The port matters. Some nodes run an Ollama service of the node on the
-# default port 11434 (cn19, seen on 2026-11-14). Without OLLAMA_HOST the
+# default port 11434 (cn19 and asus1). Without OLLAMA_HOST the
 # ollama command talks to that service: another Ollama version, other
 # settings and another model store.
 start_server() {
@@ -322,7 +397,23 @@ start_server() {
         sleep 2
         waited=$((waited + 2))
     done
-    log "Ollama is ready after about $waited s."
+    OLLAMA_VERSION=$(curl -fsS --max-time 10 "http://127.0.0.1:$PORT/api/version" | sed -E 's/.*"version" *: *"([^"]*)".*/\1/')
+    log "Ollama is ready after about $waited s. Server version: $OLLAMA_VERSION (source: $OLLAMA_MODULE)."
+}
+
+# check_run_version RUN_DIR: one run folder holds results of one Ollama
+# version only. The first job writes the version, later jobs compare it.
+check_run_version() {
+    local file="$1/ollama-version.txt" now="$OLLAMA_MODULE $OLLAMA_VERSION $ARCH" before
+    if [[ -f $file ]]; then
+        before=$(cat "$file")
+        if [[ $before != "$now" ]]; then
+            fail "This run folder has results from Ollama '$before'. This job uses '$now'. Do not mix them: run on the same kind of node, or set YD_ROOT to another folder."
+        fi
+    else
+        echo "$now" >"$file"
+    fi
+    log "Run folder $1: Ollama '$now'."
 }
 
 # Prints the ID that "ollama list" shows for a model name, or nothing.
@@ -368,7 +459,18 @@ load_model() {
     if ! ollama ps | grep -F "$SERVED_MODEL" | grep -q '100% GPU'; then
         fail "$SERVED_MODEL is not fully on the GPU (see 'ollama ps' above). A run on the CPU is too slow."
     fi
-    # The server log shows the total context: parallel requests x context of one request.
+    # Newer Ollama versions show the context of one request in "ollama ps" (column CONTEXT).
+    if ollama ps | head -n 1 | grep -q CONTEXT; then
+        ctx=$(ollama ps | grep -F "$SERVED_MODEL" | awk '{for (i = 1; i < NF; i++) if ($i == "GPU") {print $(i + 1); exit}}')
+        if [[ $ctx == "$CONTEXT_LENGTH" ]]; then
+            log "Context check OK: 'ollama ps' shows a context of $ctx tokens."
+        else
+            fail "'ollama ps' shows a context of '$ctx' tokens, expected $CONTEXT_LENGTH."
+        fi
+        nvidia-smi --query-gpu=name,memory.used,memory.total --format=csv 2>/dev/null || true
+        return 0
+    fi
+    # Ollama 0.6.0: the server log shows the total context: parallel requests x context of one request.
     ctx=$(grep -oE -- '--ctx-size [0-9]+' "$server_log" | tail -n 1 | awk '{print $2}' || true)
     if [[ -n $ctx ]]; then
         if (( ctx == NUM_PARALLEL * CONTEXT_LENGTH )); then
@@ -386,19 +488,17 @@ load_model() {
 # so two jobs never write the same results file. Ends this job (exit 0) if
 # another live job runs the same dataset.
 take_run_lock() {
-    local lock="$LOCK_DIR/run-$MODEL_TAG-$1" owner
+    local lock="$LOCK_DIR/run-$MODEL_TAG-$1"
     until mkdir "$lock" 2>/dev/null; do
-        owner=$(cat "$lock/job" 2>/dev/null || true)
-        if [[ -n $owner ]] && ! squeue -h -j "$owner" 2>/dev/null | grep -q .; then
-            log "Removing stale lock $lock from ended job $owner."
+        if ! lock_is_live "$lock"; then
+            log "Removing stale lock $lock from ended job $(cat "$lock/job" 2>/dev/null || echo unknown)."
             rm -rf "$lock"
             continue
         fi
-        log "Job ${owner:-unknown} already runs $1. This job has nothing to do."
+        log "Job $(cat "$lock/job" 2>/dev/null || echo unknown) already runs $1. This job has nothing to do."
         exit 0
     done
-    echo "$SLURM_JOB_ID" >"$lock/job"
-    HELD_LOCK=$lock
+    hold_lock "$lock"
 }
 
 # ------------------------------------------------------------- main steps ---
@@ -417,7 +517,7 @@ run_dataset() {
     mkdir -p "$log_dir"
 
     report_node
-    [[ $(gpu_count) -gt 0 ]] || fail "This job has no GPU. Submit it with --gres=gpu:1."
+    [[ $(gpu_count) -gt 0 ]] || fail "This job sees no GPU. On the x86 nodes submit it with --gres=gpu:1."
     check_cpu
     check_network
     check_disk
@@ -439,6 +539,7 @@ run_dataset() {
 
     load_ollama
     start_server "$server_log"
+    check_run_version "$run_dir"
     ensure_model
     take_run_lock "$run_name"
     load_model "$server_log"

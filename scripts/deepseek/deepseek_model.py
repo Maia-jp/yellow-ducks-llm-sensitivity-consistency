@@ -4,12 +4,18 @@ The paper code looks up models by name in util.llm_map. This module adds an
 entry that calls the local Ollama server through its OpenAI-compatible API,
 with the paper's settings: the temperature from the notebook and seed 42.
 
-DeepSeek-R1 is a reasoning model. With Ollama 0.6.0 its answer always starts
-with a block of reasoning text between <think> and </think>, and this cannot
-be turned off. The paper code finds the class label with a substring search
-over the whole answer, so the reasoning text would decide the label.
-ThinkStrippingChatOpenAI removes the reasoning block and passes on only the
-text after </think>. Adapted from scripts/qwen_model.py (branch qwen3.5-27b-jobs).
+DeepSeek-R1 is a reasoning model: it writes reasoning text before each answer.
+The paper code finds the class label with a substring search over the whole
+answer, so the reasoning text must not reach it.
+
+- Ollama 0.6.0 (ITU module, x86 nodes) puts the reasoning into the answer
+  text, between <think> and </think>.
+- Ollama 0.40.4 (asus1) returns the reasoning in a separate field
+  ("reasoning"). The answer text has no reasoning.
+
+ThinkStrippingChatOpenAI handles both: it removes a <think> block if there is
+one, and it removes white space around the answer. Adapted from
+scripts/qwen_model.py (branch qwen3.5-27b-jobs).
 """
 
 from __future__ import annotations
@@ -33,7 +39,8 @@ def strip_thinking(text):
     - "<think>...</think>answer" gives "answer".
     - "<think>..." without the closing tag gives "": the model reached the
       token limit while it was still reasoning, so there is no answer.
-    - Text without the tags is returned unchanged.
+    - Text without the tags is returned without the white space around it.
+      Ollama 0.40.4 starts the answer with two line breaks.
     """
     if not isinstance(text, str):
         return text
@@ -41,7 +48,7 @@ def strip_thinking(text):
         return text.rsplit(THINK_CLOSE, 1)[1].strip()
     if THINK_OPEN in text:
         return ""
-    return text
+    return text.strip()
 
 
 def _make_chat_class():

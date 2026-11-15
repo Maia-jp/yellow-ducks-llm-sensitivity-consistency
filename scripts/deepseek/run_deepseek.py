@@ -9,8 +9,10 @@ The Slurm jobs in jobs/deepseek-r1-7b/ start it. It expects a running Ollama
 server (OpenAI-compatible API) and the datasets in WORK_DIR/data.
 
 Adapted from scripts/run_qwen.py (branch qwen3.5-27b-jobs). The differences:
-- The model always writes reasoning text (<think>...</think>). The server
-  check expects it, and checks that deepseek_model.py removes it.
+- The model writes reasoning text before each answer, inside the answer
+  (<think>...</think>, Ollama 0.6.0) or in a separate field (Ollama 0.40.4).
+  The server check reports which, and checks that no reasoning text reaches
+  the paper code.
 - Ollama has no /tokenize endpoint. The prompt length check reads the token
   count from the "usage" field of a short request.
 - The smoke run prints how long it took and a rough time for the full run.
@@ -87,22 +89,24 @@ def check_server(api_base: str, model: str, max_tokens: int) -> None:
         "max_tokens": max_tokens,
     }
     reply = post_json(api_base.rstrip("/") + "/chat/completions", payload)
-    raw = reply["choices"][0]["message"]["content"]
-    if not isinstance(raw, str) or not raw.strip():
+    message = reply["choices"][0]["message"]
+    raw = message.get("content") or ""
+    reasoning = message.get("reasoning") or message.get("reasoning_content") or ""
+    if not isinstance(raw, str) or (not raw.strip() and not reasoning):
         raise SystemExit("The model server returned an empty answer.")
     answer = strip_thinking(raw)
     usage = reply.get("usage", {})
+    if reasoning:
+        where = f"reasoning in a separate field ({len(reasoning)} characters)"
+    elif THINK_CLOSE in raw or THINK_OPEN in raw:
+        where = f"reasoning inside the answer text ({len(raw)} characters with reasoning)"
+    else:
+        where = "no reasoning text found"
     print(
-        f"Server check: {len(raw)} characters with reasoning, answer without reasoning {answer!r}, "
+        f"Server check: {where}, answer without reasoning {answer!r}, "
         f"{usage.get('completion_tokens', '?')} completion tokens",
         flush=True,
     )
-    if THINK_CLOSE not in raw and THINK_OPEN not in raw:
-        print(
-            "Server check: note: the raw answer has no <think> block. This Ollama version may return the "
-            "reasoning in a separate field. The run continues, the answer text is used as it is.",
-            flush=True,
-        )
     if not answer.strip():
         raise SystemExit(
             "The answer is empty after the reasoning is removed. The model used all of max_tokens for "
