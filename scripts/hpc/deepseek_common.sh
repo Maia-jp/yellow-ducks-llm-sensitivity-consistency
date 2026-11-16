@@ -418,7 +418,9 @@ check_run_version() {
 
 # Prints the ID that "ollama list" shows for a model name, or nothing.
 model_id() {
-    ollama list | awk -v name="$1" 'NR > 1 && ($1 == name || $1 == name ":latest") {print $2; exit}'
+    local list_out
+    list_out=$(ollama list)
+    awk -v name="$1" 'NR > 1 && ($1 == name || $1 == name ":latest") {print $2; exit}' <<<"$list_out"
 }
 
 # Makes sure that the base model is in the store, checks its ID and makes the
@@ -455,13 +457,18 @@ load_model() {
         grep -v 'swbuilder' "$server_log" | grep -E 'level=(ERROR|WARN)|SIG|fatal|panic' | tail -n 20 >&2 || true
         fail "Ollama could not load $SERVED_MODEL. 'SIGILL' in the log means a CPU without AVX-512."
     fi
-    ollama ps
-    if ! ollama ps | grep -F "$SERVED_MODEL" | grep -q '100% GPU'; then
+    # Read "ollama ps" once into a variable. A pipe such as "ollama ps | head"
+    # can end ollama early, and with "set -o pipefail" the test then fails
+    # (seen on 2026-11-15: the context check below was skipped).
+    local ps_out
+    ps_out=$(ollama ps)
+    printf '%s\n' "$ps_out"
+    if ! grep -F "$SERVED_MODEL" <<<"$ps_out" | grep -q '100% GPU'; then
         fail "$SERVED_MODEL is not fully on the GPU (see 'ollama ps' above). A run on the CPU is too slow."
     fi
     # Newer Ollama versions show the context of one request in "ollama ps" (column CONTEXT).
-    if ollama ps | head -n 1 | grep -q CONTEXT; then
-        ctx=$(ollama ps | grep -F "$SERVED_MODEL" | awk '{for (i = 1; i < NF; i++) if ($i == "GPU") {print $(i + 1); exit}}')
+    if grep -q CONTEXT <<<"$ps_out"; then
+        ctx=$(grep -F "$SERVED_MODEL" <<<"$ps_out" | awk '{for (i = 1; i < NF; i++) if ($i == "GPU") {print $(i + 1); exit}}')
         if [[ $ctx == "$CONTEXT_LENGTH" ]]; then
             log "Context check OK: 'ollama ps' shows a context of $ctx tokens."
         else
