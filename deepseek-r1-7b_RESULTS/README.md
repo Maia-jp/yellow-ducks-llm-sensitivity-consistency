@@ -19,7 +19,7 @@ The jobs are in `jobs/deepseek-r1-7b/` (see its README).
 |---|---|---|---|---|
 | `TREC_RESULTS/` | TREC, 500 samples | `TREC/test.txt` | 182120 | 2026-11-16/17 |
 | `cb_test_labeled/CB_RESULTS/` | CB, 250 samples | `CB/test_labeled.jsonl` (rebuilt test labels) | 182119 | 2026-11-16/17 |
-| `CB_RESULTS/` | CB, 250 samples | `CB/train.jsonl`, the file of the Mixtral run | 183238 | 2026-11-19 |
+| `CB_RESULTS/` | CB, 250 samples | `CB/train.jsonl`, the file of the Mixtral run | 183238 | 2026-11-19 (6 h 18 min) |
 
 **Compare with Mixtral only on `CB_RESULTS/`.** The Mixtral CB run used `train.jsonl` (all 250 labels match). `test_labeled.jsonl` has other sentences (123 of 250 labels agree), so `cb_test_labeled/` is an extra held-out result, not a like-for-like comparison.
 
@@ -32,9 +32,23 @@ The paper code asks the model itself to rephrase the task instruction. A few tim
 | Run | Empty variants (of 30) |
 |---|---|
 | TREC | 1 (position 18) |
-| CB `test_labeled` | 2 (positions 7 and 22) |
+| CB `train` and CB `test_labeled` | 2 (positions 7 and 22). Both CB runs have the same 30 rephrasings: the rephrasing step sees only the instruction, and it runs at temperature 0 with seed 42. |
 
 Without these variants every metric changes by at most 0.01, so the conclusions do not depend on them.
+
+## Results (DeepSeek-R1 7B vs our Mixtral-8x7B reproduction)
+
+| Dataset | Prompt | Sensitivity DeepSeek | Sensitivity Mixtral | Consistency DeepSeek | Consistency Mixtral | Micro-F1 DeepSeek | Micro-F1 Mixtral |
+|---|---|---|---|---|---|---|---|
+| CB (train) | simple | 0.277 | 0.253 | 0.679 | 0.561 | 0.740 | 0.600 |
+| CB (train) | instruct | 0.299 | 0.179 | 0.678 | 0.622 | 0.733 | 0.703 |
+| CB (train) | fewshot | 0.297 | 0.185 | 0.644 | 0.559 | 0.704 | 0.626 |
+| TREC | simple | 0.167 | 0.191 | 0.735 | 0.657 | 0.783 | 0.729 |
+| TREC | instruct | 0.164 | 0.192 | 0.739 | 0.683 | 0.774 | 0.706 |
+| TREC | fewshot | 0.135 | 0.143 | 0.763 | 0.646 | 0.804 | 0.738 |
+
+Lower sensitivity is better. Higher consistency and micro-F1 are better. The N/A share of DeepSeek is at most 0.5 % in every run.
+Full tables and a plot: `comparison/`.
 
 ## Metrics
 
