@@ -1,0 +1,3 @@
+# Slurm writes the job logs here. Keep the folder, ignore the logs.
+*
+!.gitignore
