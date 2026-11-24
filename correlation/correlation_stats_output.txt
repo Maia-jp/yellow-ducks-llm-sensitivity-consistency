@@ -1,0 +1,59 @@
+Our configurations: 51, with S >= 0.05: 28
+Paper configurations: 60, with S >= 0.05: 37
+
+## 1. Pearson r per group (S >= 0.05), 95% CI from the Fisher z-transform
+
+                                              group source  n       r      p  ci_low  ci_high
+                                            Mixtral   ours 14 -0.4790 0.0831 -0.8050   0.0692
+                                            Mixtral  paper 12 -0.3184 0.3132 -0.7544   0.3126
+                                            Llama 3   ours  6 -0.3588 0.4849 -0.9064   0.6388
+                                            Llama 3  paper  6 -0.5483 0.2599 -0.9411   0.4743
+                                  Mixtral + Llama 3   ours 20 -0.4444 0.0496 -0.7412  -0.0024
+                                  Mixtral + Llama 3  paper 18 -0.3713 0.1293 -0.7143   0.1157
+                                               Qwen   ours  2     NaN    NaN     NaN      NaN
+                                           DeepSeek   ours  6 -0.9678 0.0015 -0.9966  -0.7280
+                                            GPT-3.5  paper 12  0.8717 0.0002  0.5959   0.9636
+                                             GPT-4o  paper  7 -0.3894 0.3879 -0.8834   0.5146
+  All four (ours: Mixtral, Llama 3, Qwen, DeepSeek)   ours 28 -0.3203 0.0966 -0.6193   0.0600
+All four (paper: Mixtral, Llama 3, GPT-3.5, GPT-4o)  paper 37 -0.0674 0.6920 -0.3830   0.2624
+
+## 2. Is our r different from the paper's r for the same models? (Fisher z-test)
+
+            group  r_ours  n_ours  r_paper  n_paper       z  p_difference
+          Mixtral -0.4790      14  -0.3184       12 -0.4268        0.6695
+          Llama 3 -0.3588       6  -0.5483        6  0.2946        0.7683
+Mixtral + Llama 3 -0.4444      20  -0.3713       18 -0.2480        0.8041
+
+## 3. Power of the Fisher z-test (alpha = 0.05, two-sided)
+
+                                      comparison  n1      n2  power
+             our r vs the paper's reported -0.07  20 18.0000 0.2101
+         -0.44 vs -0.07 (same as above, rounded)  20 18.0000 0.2057
+                     -0.44 vs 0 (no correlation)  20 18.0000 0.2659
+n per group needed for 80% power, -0.44 vs -0.07 101     NaN 0.8000
+
+## 4. Pooled vs within-group correlations (group means removed)
+
+source                               models  pooled_r  within_model_r  within_dataset_r  within_dataset_p
+ paper Llama 3 + Mixtral + GPT-3.5 + GPT-4o   -0.0674          0.2282           -0.5037            0.0015
+ paper                    Mixtral + Llama 3   -0.3713         -0.3666           -0.1497            0.5534
+  ours                    Mixtral + Llama 3   -0.4444         -0.4410           -0.7469            0.0002
+  ours  Llama 3 + Mixtral + Qwen + DeepSeek   -0.3203         -0.4834           -0.2765            0.1543
+
+## DeepSeek: its 6 configurations come from two datasets only
+
+dataset sensitivity               consistency              
+               mean    min    max        mean    min    max
+     CB      0.2911 0.2769 0.2994      0.6668 0.6442 0.6786
+   TREC      0.1554 0.1350 0.1668      0.7460 0.7353 0.7634
+DeepSeek within-dataset r: -0.7003 (n = 6, 3 strategies per dataset)
+
+Note: removing group means costs degrees of freedom, so the p-values in part 4 are slightly optimistic.
+
+## Paper Table 1: mean sensitivity and consistency per model (all 15 configurations)
+
+  model  sensitivity  consistency
+GPT-3.5       0.1675       0.6856
+ GPT-4o       0.0645       0.7678
+Llama 3       0.0695       0.7547
+Mixtral       0.1183       0.6555
