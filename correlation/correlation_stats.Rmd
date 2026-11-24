@@ -1,0 +1,264 @@
+---
+title: "correlation_stats"
+author: "Cristina Tuá"
+date: "2026-11-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+install.packages("jsonlite")
+library(jsonlite)
+
+THRESHOLD <- 0.05
+ALPHA <- 0.05
+MODELS_DIR <- file.path("..", "models")
+MODEL_FILES <- c(
+  "Llama 3"  = "Llama-3-70B-Instruct_RESULTS.zip",
+  "Mixtral"  = "mixtral8x7b-Instruct-v0.1_RESULTS.zip",
+  "Qwen"     = "qwen3.5-27b_RESULTS.zip",
+  "DeepSeek" = "deepseek-r1-7b_RESULTS.zip"
+)
+STRATEGIES <- c(simple = "Simple", instruct = "Detail", fewshot = "1-shot")
+DATASETS <- c("TREC", "CB", "RTE", "DBPedia", "WoS")
+```
+
+
+```{r}
+
+# the values are sensitivity, consistency.
+PAPER <- list(
+  "Llama 3" = rbind(
+    c(.127, .693, .141, .694, .095, .686), c(.018, .956, .016, .963, .014, .962),
+    c(.157, .701, .213, .727, .048, .755), c(.018, .932, .058, .901, .030, .924),
+    c(.043, .479, .034, .480, .030, .468)),
+  "Mixtral" = rbind(
+    c(.223, .657, .182, .709, .166, .640), c(.203, .625, .013, .695, .017, .600),
+    c(.195, .669, .176, .676, .046, .754), c(.053, .802, .054, .808, .069, .773),
+    c(.112, .483, .124, .469, .142, .472)),
+  "GPT-3.5" = rbind(
+    c(.128, .573, .148, .549, .100, .649), c(.274, .730, .330, .732, .288, .737),
+    c(.292, .719, .346, .719, .218, .703), c(.026, .916, .028, .895, .026, .914),
+    c(.095, .482, .093, .480, .120, .486)),
+  "GPT-4o" = rbind(
+    c(.042, .797, .068, .708, .037, .816), c(.087, .814, .081, .826, .058, .880),
+    c(.233, .757, .087, .823, .074, .835), c(.023, .939, .022, .921, .017, .922),
+    c(.048, .492, .045, .493, .046, .494))
+)
+
+
+identify_dataset <- function(path) {
+  path <- tolower(path)
+  parts <- strsplit(path, "/", fixed = TRUE)[[1]]
+  if ("cb-train" %in% parts) return("CB")
+  folder_names <- c(DBPedia = "dbpedia", RTE = "rte", TREC = "trec", WoS = "wos")
+  for (name in names(folder_names)) if (folder_names[[name]] %in% parts) return(name)
+  keys <- list(c("DBPedia", "dbpedia_results"), c("TREC", "trec_results"), c("RTE", "rte_results"),
+               c("WoS", "wos_results"), c("WoS", "wos46985_results"), c("CB", "cb_results"))
+  for (k in keys) if (grepl(k[2], path, fixed = TRUE)) return(k[1])
+  NA_character_
+}
+```
+
+
+```{r}
+sensitivity_of <- function(dists) {
+  mean(vapply(dists, function(p) {
+    nz <- p[p > 0]
+    -sum(nz * log(nz)) / log(length(p))
+  }, numeric(1)))
+}
+
+consistency_of <- function(dists, targets) {
+  total <- 0
+  pairs <- 0
+  for (target in unique(targets)) {
+    P <- do.call(rbind, dists[targets == target])  
+    tvd <- matrix(0, nrow(P), nrow(P))
+    for (k in seq_len(ncol(P))) tvd <- tvd + abs(outer(P[, k], P[, k], "-"))
+    tvd <- tvd / 2
+    total <- total + sum(1 - tvd)
+    pairs <- pairs + nrow(P)^2
+  }
+  total / pairs
+}
+
+our_configurations <- function() {
+  rows <- list()
+  tmp <- tempfile("yd_results_")
+  for (model in names(MODEL_FILES)) {
+    zip_path <- file.path(MODELS_DIR, MODEL_FILES[[model]])
+    if (!file.exists(zip_path)) stop("Missing file: ", zip_path,
+                                     ". Set the working directory to the 'correlation' folder.")
+    for (path in unzip(zip_path, list = TRUE)$Name) {
+      dataset <- identify_dataset(path)
+      strategy <- NA_character_
+      for (k in names(STRATEGIES)) if (endsWith(path, paste0("results_", k, ".json"))) strategy <- STRATEGIES[[k]]
+      lower <- tolower(path)
+     
+      if (is.na(dataset) || is.na(strategy) || grepl("smoke", lower, fixed = TRUE) ||
+          grepl("test_labeled", lower, fixed = TRUE)) next
+      unzip(zip_path, files = path, exdir = tmp)
+      data <- read_json(file.path(tmp, path), simplifyVector = FALSE)
+      samples <- Filter(function(s) is.list(s) && !is.null(s$distribution), data)
+      dists <- lapply(samples, function(s) as.numeric(unlist(s$distribution)))
+      targets <- vapply(samples, function(s) as.character(s$target), character(1))
+      rows[[length(rows) + 1]] <- data.frame(
+        model = model, dataset = dataset, strategy = strategy,
+        sensitivity = sensitivity_of(dists), consistency = consistency_of(dists, targets))
+      cat("read", model, dataset, strategy, "\n")
+    }
+  }
+  unlink(tmp, recursive = TRUE)
+  df <- do.call(rbind, rows)
+  if (any(duplicated(df[, c("model", "dataset", "strategy")]))) stop("duplicate configuration")
+  df
+}
+paper_configurations <- function() {
+  rows <- list()
+  for (model in names(PAPER)) {
+    m <- PAPER[[model]]
+    for (i in seq_along(DATASETS)) {
+      for (j in seq_along(STRATEGIES)) {
+        rows[[length(rows) + 1]] <- data.frame(
+          model = model, dataset = DATASETS[i], strategy = STRATEGIES[[j]],
+          sensitivity = m[i, 2 * j - 1], consistency = m[i, 2 * j])
+      }
+    }
+  }
+  do.call(rbind, rows)
+}
+```
+
+the statistics results are here:
+```{r}
+
+pearson <- function(df) {
+  n <- nrow(df)
+  if (n < 4 || length(unique(df$sensitivity)) < 2) {
+    return(data.frame(n = n, r = NA, p = NA, ci_low = NA, ci_high = NA))
+  }
+  test <- cor.test(df$sensitivity, df$consistency, method = "pearson")
+  r <- unname(test$estimate)
+  se <- 1 / sqrt(n - 3)
+  z <- atanh(r)
+  data.frame(n = n, r = r, p = test$p.value, ci_low = tanh(z - 1.96 * se), ci_high = tanh(z + 1.96 * se))
+}
+
+fisher_difference <- function(r1, n1, r2, n2) {
+  z <- (atanh(r1) - atanh(r2)) / sqrt(1 / (n1 - 3) + 1 / (n2 - 3))
+  c(z = z, p = 2 * pnorm(-abs(z)))
+}
+
+power_difference <- function(rho1, rho2, n1, n2, alpha = ALPHA) {
+  delta <- abs(atanh(rho1) - atanh(rho2))
+  se <- sqrt(1 / (n1 - 3) + 1 / (n2 - 3))
+  crit <- qnorm(1 - alpha / 2)
+  pnorm(delta / se - crit) + pnorm(-delta / se - crit)
+}
+demeaned <- function(df, by) {
+  key <- interaction(df[by], drop = TRUE)
+  df$sensitivity <- df$sensitivity - ave(df$sensitivity, key)
+  df$consistency <- df$consistency - ave(df$consistency, key)
+  df
+}
+
+show <- function(title, df) {
+  cat("\n##", title, "\n\n")
+  num <- vapply(df, is.numeric, logical(1))
+  df[num] <- lapply(df[num], function(x) round(x, 4))
+  print(df, row.names = FALSE)
+}
+
+#from the main
+ours_all <- our_configurations()
+paper_all <- paper_configurations()
+ours <- ours_all[ours_all$sensitivity >= THRESHOLD, ]
+paper <- paper_all[paper_all$sensitivity >= THRESHOLD, ]
+cat("\nOur configurations:", nrow(ours_all), "- with S >=", THRESHOLD, ":", nrow(ours), "\n")
+cat("Paper configurations:", nrow(paper_all), "- with S >=", THRESHOLD, ":", nrow(paper), "\n")
+
+#corr. with CI
+groups <- list(
+  list("Mixtral", "Mixtral", c("ours", "paper")),
+  list("Llama 3", "Llama 3", c("ours", "paper")),
+  list("Mixtral + Llama 3", c("Mixtral", "Llama 3"), c("ours", "paper")),
+  list("Qwen", "Qwen", "ours"),
+  list("DeepSeek", "DeepSeek", "ours"),
+  list("GPT-3.5", "GPT-3.5", "paper"),
+  list("GPT-4o", "GPT-4o", "paper"),
+  list("All four (ours: Mixtral, Llama 3, Qwen, DeepSeek)", names(MODEL_FILES), "ours"),
+  list("All four (paper: Mixtral, Llama 3, GPT-3.5, GPT-4o)", names(PAPER), "paper"))
+rows <- list()
+for (g in groups) {
+  for (source in g[[3]]) {
+    data <- if (source == "ours") ours else paper
+    rows[[length(rows) + 1]] <- cbind(group = g[[1]], source = source,
+                                      pearson(data[data$model %in% g[[2]], ]))
+  }
+}
+show("1.Pearson r per group (S >= 0.05), 95% CI from the Fisher z-transform", do.call(rbind, rows))
+
+```
+
+difference ours vs. paper:
+```{r}
+rows <- list()
+for (g in list(list("Mixtral", "Mixtral"), list("Llama 3", "Llama 3"),
+               list("Mixtral + Llama 3", c("Mixtral", "Llama 3")))) {
+  a <- pearson(ours[ours$model %in% g[[2]], ])
+  b <- pearson(paper[paper$model %in% g[[2]], ])
+  f <- fisher_difference(a$r, a$n, b$r, b$n)
+  rows[[length(rows) + 1]] <- data.frame(group = g[[1]], r_ours = a$r, n_ours = a$n,
+                                         r_paper = b$r, n_paper = b$n, z = f[["z"]], p_difference = f[["p"]])
+}
+show("2.Is our r different from the paper's r for the same models? (Fisher z-test)", do.call(rbind, rows))
+```
+
+
+```{r}
+# Power
+a <- pearson(ours[ours$model %in% c("Mixtral", "Llama 3"), ])
+b <- pearson(paper[paper$model %in% c("Mixtral", "Llama 3"), ])
+n80 <- 5
+while (power_difference(-0.44, -0.07, n80, n80) < 0.8) n80 <- n80 + 1
+show("3. Power of the Fisher z-test (alpha = 0.05, two-sided)", data.frame(
+  comparison = c("our r vs the paper's reported -0.07", "-0.44 vs -0.07 (same as above, rounded)",
+                 "-0.44 vs 0 (no correlation)", "n per group needed for 80% power, -0.44 vs -0.07"),
+  n1 = c(a$n, a$n, a$n, n80), n2 = c(b$n, b$n, b$n, NA),
+  power = c(power_difference(a$r, -0.07, a$n, b$n), power_difference(-0.44, -0.07, a$n, b$n),
+            power_difference(-0.44, 0, a$n, b$n), 0.8)))
+
+#pooled vs within-group correlations
+rows <- list()
+for (g in list(list("paper", names(PAPER)), list("paper", c("Mixtral", "Llama 3")),
+               list("ours", c("Mixtral", "Llama 3")), list("ours", names(MODEL_FILES)))) {
+  data <- if (g[[1]] == "ours") ours else paper
+  sub <- data[data$model %in% g[[2]], ]
+  within_ds <- pearson(demeaned(sub, "dataset"))
+  rows[[length(rows) + 1]] <- data.frame(source = g[[1]], models = paste(g[[2]], collapse = " + "),
+                                         pooled_r = pearson(sub)$r,
+                                         within_model_r = pearson(demeaned(sub, "model"))$r,
+                                         within_dataset_r = within_ds$r, within_dataset_p = within_ds$p)
+}
+show("4.Pooled vs within-group correlations (group means removed)", do.call(rbind, rows))
+```
+
+
+```{r}
+ds <- ours[ours$model == "DeepSeek", ]
+show("DeepSeek: its 6 configurations come from two datasets only",
+     aggregate(cbind(sensitivity, consistency) ~ dataset, data = ds, FUN = mean))
+cat(sprintf("DeepSeek within-dataset r: %.4f (n = %d, 3 strategies per dataset)\n",
+            pearson(demeaned(ds, "dataset"))$r, nrow(ds)))
+cat("\nNote: removing group means costs degrees of freedom, so the p-values in part 4 are slightly optimistic.\n")
+
+show("Paper table 1: mean sensitivity and consistency per model (all 15 configurations)",
+     aggregate(cbind(sensitivity, consistency) ~ model, data = paper_all, FUN = mean))
+```
+
+
