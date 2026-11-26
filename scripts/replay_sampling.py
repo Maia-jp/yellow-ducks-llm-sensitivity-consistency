@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CODE_DIR = ROOT / "sensitivity-consistency-LLM"
+CODE_DIR = ROOT / "original-paper"
 NOTEBOOKS = {"dbpedia": "LLM DBPEDIA.ipynb", "wos": "LLM WoS.ipynb"}
 CACHE_MARKER = "if not os.path.exists(processed_data_file):"
 

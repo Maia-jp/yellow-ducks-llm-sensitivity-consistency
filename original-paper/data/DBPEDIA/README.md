@@ -50,8 +50,8 @@ Rebuild the two subset files:
 
 ```bash
 python3 scripts/replay_sampling.py --dataset dbpedia \
-  --input-file sensitivity-consistency-LLM/data/DBPEDIA/test.csv \
-  --subset-dir sensitivity-consistency-LLM/data/DBPEDIA
+  --input-file original-paper/data/DBPEDIA/test.csv \
+  --subset-dir original-paper/data/DBPEDIA
 ```
 
 ## Citation

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared steps for the DeepSeek-R1 7B Slurm jobs in jobs/deepseek-r1-7b/.
+# Shared steps for the DeepSeek-R1 7B Slurm jobs in scripts/hpc/jobs/deepseek-r1-7b/.
 #
 # The job files source this file. Do not run it on the login node:
 # it installs packages and can download the model, so it refuses to start
@@ -30,7 +30,7 @@ fi
 # ---------------------------------------------------------------- settings ---
 
 REPO_DIR=${SLURM_SUBMIT_DIR:?}
-CODE_DIR="$REPO_DIR/sensitivity-consistency-LLM"
+CODE_DIR="$REPO_DIR/original-paper"
 PY_DIR="$REPO_DIR/scripts/deepseek"
 LOCK_FILES="$REPO_DIR/jobs/deepseek-r1-7b/locks"
 

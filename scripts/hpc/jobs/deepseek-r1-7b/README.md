@@ -1,8 +1,8 @@
 # DeepSeek-R1 7B jobs: one Slurm job for each dataset
 
-These jobs run the paper's original code (`sensitivity-consistency-LLM/`) with `deepseek-r1:7b` on ITU HPC (`hpc3`).
+These jobs run the paper's original code (`original-paper/`) with `deepseek-r1:7b` on ITU HPC (`hpc3`).
 The model server is Ollama. The jobs are adapted from the Qwen3.5-27B jobs on the branch `qwen3.5-27b-jobs` (`jobs/qwen3.5-27b/`). The environment, lock and dataset steps are the same. vLLM is replaced by Ollama.
-The login node only runs `git`, `sbatch` and `squeue`. Read [AGENTS.md](../../AGENTS.md) before you use the cluster.
+The login node only runs `git`, `sbatch` and `squeue`. Read [the HPC guides](../../../../docs/hpc/) before you use the cluster.
 
 **Status (2026-11-15): the full job has not yet finished on the cluster.** See "What we checked" at the end. Run the smoke test first.
 
@@ -27,10 +27,10 @@ We use `asus1`: on 2026-11-15 every GPU of the x86 nodes was in use and about 40
 | `x86/*.sbatch` | The same runs on an x86 node |
 | `locks/eval-py310.txt` | Exact package versions for the paper code. Same file as in `jobs/qwen3.5-27b/locks/`. |
 | `slurm-logs/` | Slurm writes `deepseek7b-<dataset>-<job ID>.out` and `.err` here. Git ignores them. |
-| `../../scripts/hpc/deepseek_common.sh` | The steps that all jobs share |
-| `../../scripts/deepseek/run_deepseek.py` | Runs the notebook cells and `run_grid_search()` for one dataset |
-| `../../scripts/deepseek/deepseek_model.py` | Adds the model to `util.llm_map` and keeps the reasoning text away from the paper code |
-| `../../scripts/deepseek/sitecustomize.py` | Makes the Ray workers know the model |
+| `../../../../scripts/hpc/deepseek_common.sh` | The steps that all jobs share |
+| `../../../../scripts/deepseek/run_deepseek.py` | Runs the notebook cells and `run_grid_search()` for one dataset |
+| `../../../../scripts/deepseek/deepseek_model.py` | Adds the model to `util.llm_map` and keeps the reasoning text away from the paper code |
+| `../../../../scripts/deepseek/sitecustomize.py` | Makes the Ray workers know the model |
 
 ## Settings
 
@@ -94,15 +94,15 @@ Everything is in the home folder on the cluster, under `~/yellow-ducks/`:
 2. Run the smoke test (2 samples, 3 rephrasings). The first job also builds the Python environment, so it takes longer:
 
    ```bash
-   sbatch --time=02:00:00 --export=ALL,SMOKE=1 jobs/deepseek-r1-7b/trec.sbatch
+   sbatch --time=02:00:00 --export=ALL,SMOKE=1 scripts/hpc/jobs/deepseek-r1-7b/trec.sbatch
    squeue -u "$USER"
    ```
 
 3. When the job ends, read both log files:
 
    ```bash
-   cat jobs/deepseek-r1-7b/slurm-logs/deepseek7b-trec-<job ID>.out
-   cat jobs/deepseek-r1-7b/slurm-logs/deepseek7b-trec-<job ID>.err
+   cat scripts/hpc/jobs/deepseek-r1-7b/slurm-logs/deepseek7b-trec-<job ID>.out
+   cat scripts/hpc/jobs/deepseek-r1-7b/slurm-logs/deepseek7b-trec-<job ID>.err
    ```
 
    The `.out` file must end with `Job finished with exit code 0`. Read these lines:
@@ -113,11 +113,11 @@ Everything is in the home folder on the cluster, under `~/yellow-ducks/`:
 4. Decide which datasets to run (see "Size of the runs"), then submit them:
 
    ```bash
-   for d in cb trec; do sbatch jobs/deepseek-r1-7b/$d.sbatch; done
+   for d in cb trec; do sbatch scripts/hpc/jobs/deepseek-r1-7b/$d.sbatch; done
    ```
 
 5. The job files ask for 24 hours. If a job reaches the limit, submit the same job again. It continues from the results file.
-   `asus1` allows 3 days: `sbatch --time=3-00:00:00 jobs/deepseek-r1-7b/rte.sbatch`. Other groups use the node too, so do not hold it longer than needed.
+   `asus1` allows 3 days: `sbatch --time=3-00:00:00 scripts/hpc/jobs/deepseek-r1-7b/rte.sbatch`. Other groups use the node too, so do not hold it longer than needed.
 
 `asus1` has one GPU. Two jobs at the same time share it, so each one is slower.
 

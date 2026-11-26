@@ -1,9 +1,8 @@
 # ITU HPC: how jobs and environments work
 
 Read this guide before you write, change or submit any Slurm job, and before you create a Python environment on the cluster.
-The rules in [AGENTS.md](../../AGENTS.md) come first. If this guide and `AGENTS.md` differ, follow `AGENTS.md` and ask the user.
 
-**Source:** the slides *Exercises for making environments* (`ENVS_HPC_SEP2026.pdf`) by Dr Inna Ermilova, Special Adviser and HPC administrator at ITU, September 2026. The user supplied them.
+**Source:** the slides *Exercises for making environments* (`ENVS_HPC_SEP2026.pdf`) by Dr Inna Ermilova, Special Adviser and HPC administrator at ITU, September 2026.
 The slide examples use the instructor's account (`/home/iner`) and her node, GPU and module names. This guide replaces them with placeholders.
 **Check every placeholder on the cluster before you use it.** Nothing here was tested on `hpc3`.
 
@@ -19,7 +18,7 @@ The slide examples use the instructor's account (`/home/iner`) and her node, GPU
 
 - The login node has no GPUs and no strong CPUs. A heavy process can overload it and send it to a draining state.
 - ITU restricts accounts that run heavy processes on the login node. This already happened to this group on 2026-10-26 after a `pip` run.
-- The slides name `pip install` as the example. `AGENTS.md` also forbids `conda`, `uv`, Jupyter, VS Code Remote and model servers on the login node.
+- The slides name `pip install` as the example. Do not run `conda`, `uv`, Jupyter, VS Code Remote or model servers on the login node either.
 
 ## One-time set-up of your account
 
@@ -32,7 +31,7 @@ cat ~/.bashrc
 ```
 
 If the file has a block between `# >>> conda initialize >>>` and `# <<< conda initialize <<<`, comment out every line of it with `#`.
-A conda that starts at every login conflicts with the environments below. Ask the user before you edit `.bashrc`.
+A conda that starts at every login conflicts with the environments below.
 
 ### 2. Create a temporary folder
 
@@ -97,11 +96,11 @@ export TMPDIR=$HOME/tmp
 |---|---|---|
 | `<PARTITION>` | `scavenge` | `sinfo -o '%P %a %l %D'` |
 | `<NODE>` | `cn[3]`, `cn[7]`, `cn[19]` | `sinfo -N` |
-| `<GPU_TYPE>:<N>` | `a100_80gb:1`, `l40s:4` | Ask the user or read the node description. |
+| `<GPU_TYPE>:<N>` | `a100_80gb:1`, `l40s:4` | Read the node description (`scontrol show node <NODE>`). |
 | `<HH:MM:SS>` | `07:30:00` for environment jobs | Choose for the work. Do not request more than you need. |
 
 `set -e` stops the job at the first error. `set -x` prints each command in the log.
-Each slide example asks for a GPU node, also when it builds a CPU environment. You do not need a GPU to build an environment. Ask the user before you request GPU resources.
+Each slide example asks for a GPU node, also when it builds a CPU environment. You do not need a GPU to build an environment.
 
 ## Where to build an environment
 
@@ -111,7 +110,7 @@ The slides name four ways:
 |---|---|---|
 | A. Conda module | Load the conda module and create the environment in your home folder | Shown in "Option A" below |
 | B. Own Miniconda | Download Miniconda in a job and install it in your home folder | Shown in "Option B" below. On `dgx1` and `dgx2`, use the `aarch64` installer. |
-| C. Pre-made environment in `/opt/itu` | Use an environment that ITU provides | Not shown in the slides. Look in `/opt/itu` and ask the user. |
+| C. Pre-made environment in `/opt/itu` | Use an environment that ITU provides | Not shown in the slides. Look in `/opt/itu`. |
 | D. `/scratch` of a node | Build the environment on the node's local disk, and delete it later | Check the free space first. Other users may leave data there. Only works if the job runs on the same node. |
 
 "Some of these solutions are very slow but might be the only working ones." Pick the simplest option that works.
@@ -142,7 +141,7 @@ hostname
 df -h
 ```
 
-Read `size_scr.out`. If a lot of space is used, ask the user before you continue.
+Read `size_scr.out`. If a lot of space is used, pick another node or option.
 For a fast start, one job can create the environment, install the packages and run the task on that node.
 
 ### Option A: conda module
@@ -249,7 +248,7 @@ python3 yourscript.py
 
 The slide also shows a short check inside the job with `python3 - << 'EOF' ... EOF`. Use `python3 yourscript.py` for real work.
 
-## Interactive session (the user approves it first)
+## Interactive session
 
 The slides show how to start an interactive shell on a compute node, as an exercise:
 
@@ -257,22 +256,21 @@ The slides show how to start an interactive shell on a compute node, as an exerc
 srun --nodelist=<NODE> --ntasks-per-node=1 -p <PARTITION> --time=01:00:00 --pty bash -i
 ```
 
-This needs a real terminal. An agent that runs commands without a terminal cannot use it. Prefer `sbatch` jobs. Never use it on the login node.
+This needs a real terminal. Prefer `sbatch` jobs. Never use it on the login node.
 
-## Rules for agents (summary)
+## Rules (summary)
 
-- Show the user each remote command before you run it. Use few, light commands.
+- Use few, light commands on the login node.
 - Never run a package manager on the login node. Put `pip`, `conda` and `uv` inside a job file.
 - Put `export TMPDIR=$HOME/tmp` in every job file.
-- Never guess node, GPU, partition or module names. Read them from the cluster, or ask the user.
+- Never guess node, GPU, partition or module names. Read them from the cluster.
 - Request the smallest time and resources that the work needs. Do not request a GPU for an environment build.
-- Do not cancel jobs, delete files or edit `.bashrc` without the user's approval.
 - After you submit, record the job ID. When the job ends, read the `.out` and `.err` files before you report.
-- Stop and tell the user if a command fails with `fork: retry: Resource temporarily unavailable`.
+- Stop if a command fails with `fork: retry: Resource temporarily unavailable`.
 
 ## Example for this project (not tested)
 
-A job that checks the datasets without the login node. Run `sbatch` from the repository root after the user approves it:
+A job that checks the datasets without the login node. Run `sbatch` from the repository root:
 
 ```bash
 #!/bin/bash

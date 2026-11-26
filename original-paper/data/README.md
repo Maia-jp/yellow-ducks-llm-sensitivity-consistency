@@ -1,7 +1,7 @@
 # Data for the sensitivity and consistency reproduction
 
 This folder holds every file that the five notebooks read.
-The notebooks read `./data/...` from the folder `sensitivity-consistency-LLM`, so the paths work as they are.
+The notebooks read `./data/...` from the folder `original-paper`, so the paths work as they are.
 We compared each file with its official source on 2026-10-27. The full record is in `docs/datasets/README.md`.
 
 ## Datasets

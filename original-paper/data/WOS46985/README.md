@@ -65,9 +65,9 @@ Rebuild the two subset files (needs `X.txt`):
 
 ```bash
 python3 scripts/replay_sampling.py --dataset wos \
-  --input-file sensitivity-consistency-LLM/data/WOS46985/X.txt \
-  --target-file sensitivity-consistency-LLM/data/WOS46985/YL1.txt \
-  --subset-dir sensitivity-consistency-LLM/data/WOS46985
+  --input-file original-paper/data/WOS46985/X.txt \
+  --target-file original-paper/data/WOS46985/YL1.txt \
+  --subset-dir original-paper/data/WOS46985
 ```
 
 ## Citation and license

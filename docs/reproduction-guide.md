@@ -8,9 +8,9 @@ This branch holds the foundation: the paper's code, the verified datasets, and t
 
 - [Paper PDF](paper.pdf), [BibTeX](references.bib), [DOI](https://doi.org/10.18653/v1/2025.naacl-long.73)
 - Original code: https://github.com/nec-research/sensitivity-consistency-LLM
-- Our copy of the code: [../sensitivity-consistency-LLM/](../sensitivity-consistency-LLM/). It comes from commit
+- Our copy of the code: [../original-paper/](../original-paper/). It comes from commit
   [`657355688d4b58a6e3a2ac20484518c5d402c8d8`](https://github.com/nec-research/sensitivity-consistency-LLM/tree/657355688d4b58a6e3a2ac20484518c5d402c8d8).
-  NEC Laboratories Europe GmbH developed it. The [NEC license](../sensitivity-consistency-LLM/LICENSE.txt) applies.
+  NEC Laboratories Europe GmbH developed it. The [NEC license](../original-paper/LICENSE.txt) applies.
 - One change to the code: `LLM TREC.ipynb` is a repaired copy, because the upstream file is cut and is not valid JSON.
 
 The notebooks contain the authors' outputs from 2024-08. Those outputs are not results from our runs.
@@ -30,8 +30,8 @@ The notebooks contain the authors' outputs from 2024-08. Those outputs are not r
 
 ## Datasets
 
-The data is in `sensitivity-consistency-LLM/data/`. Each dataset folder has a `README.md`.
-Read the [data index](../sensitivity-consistency-LLM/data/README.md) first. The full check against the official sources is in [datasets/README.md](datasets/README.md).
+The data is in `original-paper/data/`. Each dataset folder has a `README.md`.
+Read the [data index](../original-paper/data/README.md) first. The full check against the official sources is in [datasets/README.md](datasets/README.md).
 
 | Dataset | Paper | What the notebook evaluates | Cut |
 |---|---|---|---|
@@ -50,7 +50,7 @@ python3 scripts/fetch_datasets.py                 # restore damaged files, extra
 
 **CB split.** The paper says "250 test samples". The released notebook reads `train.jsonl`. The official test file has no labels, so the paper's CB numbers most likely come from `train.jsonl`.
 Run CB on `train.jsonl` to compare with Table 1. Run it on `test_labeled.jsonl` (labels rebuilt from the original annotations) for a held-out test.
-Do not use `test_labeled.jsonl` to tune prompts or to choose models. See [CB/README.md](../sensitivity-consistency-LLM/data/CB/README.md).
+Do not use `test_labeled.jsonl` to tune prompts or to choose models. See [CB/README.md](../original-paper/data/CB/README.md).
 
 ## Metrics
 
@@ -91,7 +91,7 @@ Each cell is Sensitivity / Consistency / Micro-F1. Compare all three metrics.
 
 ## Setup
 
-Run these commands from `sensitivity-consistency-LLM/`. The code needs Python 3.10 and an OpenAI-compatible model server (vLLM or another).
+Run these commands from `original-paper/`. The code needs Python 3.10 and an OpenAI-compatible model server (vLLM or another).
 
 1. Create an environment and install the pinned packages (`requirements.txt`: langchain 0.2.3, ray 2.6.3, numpy 1.25.2, pandas 2.2.2, scikit-learn 1.3.0, and others):
 
@@ -144,7 +144,7 @@ Add the measured values after each full run. Include the dataset, the data file,
 
 ## HPC
 
-See [hpc/agent-setup.md](hpc/agent-setup.md). Access: `ssh s25441@hpc3.itu.dk` (no password). The rules for ITU HPC are in [../AGENTS.md](../AGENTS.md):
+See [hpc/getting-started.md](hpc/getting-started.md) and [hpc/jobs-and-environments.md](hpc/jobs-and-environments.md). Access: `ssh s25441@hpc3.itu.dk` (no password). The main rule for ITU HPC:
 use `srun` or `sbatch` for every install, download and model job. Never use the login node for them.
 
 ## Citation
