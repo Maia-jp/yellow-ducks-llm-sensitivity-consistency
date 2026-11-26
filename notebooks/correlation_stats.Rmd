@@ -16,7 +16,7 @@ library(jsonlite)
 
 THRESHOLD <- 0.05
 ALPHA <- 0.05
-MODELS_DIR <- file.path("..", "models")
+MODELS_DIR <- file.path("..", "results", "models")
 MODEL_FILES <- c(
   "Llama 3"  = "Llama-3-70B-Instruct_RESULTS.zip",
   "Mixtral"  = "mixtral8x7b-Instruct-v0.1_RESULTS.zip",

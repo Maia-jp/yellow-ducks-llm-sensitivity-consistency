@@ -14,11 +14,13 @@ We reproduce selected results using **Mixtral and Llama‐3** and extend the eva
 
 | Folder | Contents |
 |---|---|
-| `sensitivity-consistency-LLM/` | Original paper implementation, evaluation notebooks, dependencies, and datasets |
-| `sensitivity-consistency-LLM/data/` | Five evaluation datasets, subsets, and dataset documentation |
-| `models/` | Model-specific results |
-| `correlation/` | Correlation analysis (Claim 1.) |
-| `scripts/` | Supporting scripts for dataset preparation, verification, and evaluation |
+| `original-paper/` | Original paper implementation (NEC), evaluation notebooks, dependencies |
+| `original-paper/data/` | Five evaluation datasets, subsets, and dataset documentation |
+| `notebooks/` | Our exploratory analysis (correlation analysis for Claim 1) |
+| `results/models/` | Raw results per model (zipped) |
+| `results/correlation/` | Correlation plots and statistics output |
+| `scripts/` | Dataset preparation, verification, model runners, and analysis scripts |
+| `scripts/hpc/jobs/` | Slurm job files for ITU HPC |
 | `docs/` | Original paper, reproduction instructions, dataset verification, and HPC documentation |
 
 ## Models
@@ -40,7 +42,7 @@ We use the five datasets provided with the original implementation, covering dif
 
 All datasets are located in:
 
-`sensitivity-consistency-LLM/data/`
+`original-paper/data/`
 
 Each dataset directory contains documentation describing its source, preprocessing, and evaluation setup.
 

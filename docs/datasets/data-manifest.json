@@ -102,7 +102,7 @@
       "rule": "scripts/prepare_cb_test_labels.py on CB/test.jsonl and CommitmentBank-items.csv. Counts 113 entailment, 16 neutral, 121 contradiction."
     }
   },
-  "data_dir": "sensitivity-consistency-LLM/data",
+  "data_dir": "original-paper/data",
   "subsets": {
     "DBPEDIA/evaluation_subset_2000.jsonl": {
       "sha256": "473df6c29ee5aaf09e39104048e6cab7abeef2ba16906d009f0a2d1171ef417b",

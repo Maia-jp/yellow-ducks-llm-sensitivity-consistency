@@ -7,12 +7,14 @@ __pycache__/
 .env.*
 !.env.example
 
-# Old data folder at the repository root. The data now lives in sensitivity-consistency-LLM/data/.
+# Old data folder at the repository root. The data now lives in original-paper/data/.
 /data/
 
 # Run output. Do not commit it.
 **/data/*_RESULTS/
 results/
+# ...but keep the curated results folder at the repo root.
+!/results/
 *.parsed.json
 *.log
 *.pid
@@ -21,4 +23,4 @@ results/
 *:Zone.Identifier
 
 # Derived from WOS46985/X.zip. Run scripts/fetch_datasets.py to extract it (65 MB).
-sensitivity-consistency-LLM/data/WOS46985/X.txt
+original-paper/data/WOS46985/X.txt

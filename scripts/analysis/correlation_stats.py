@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Statistical checks for Claim 1 (sensitivity-consistency correlation).
 
-Complements "Sensiitivity-Consistency correlation analysis.ipynb" in this folder.
-It builds the same 51 model-dataset-strategy configurations from ../models/*.zip
+Complements notebooks/correlation-analysis.ipynb.
+It builds the same 51 model-dataset-strategy configurations from results/models/*.zip
 (same formulas as the notebook) and the 60 configurations of the paper's Table 1,
 keeps the configurations with sensitivity >= 0.05, and reports:
 
@@ -20,7 +20,7 @@ keeps the configurations with sensitivity >= 0.05, and reports:
      with different mean levels can change a correlation, or even its sign
      (Simpson's paradox).
 
-Run from this folder:  python3 correlation_stats.py
+Run from the repo root:  python3 scripts/analysis/correlation_stats.py > results/correlation/correlation_stats_output.txt
 Needs numpy, pandas and scipy (the same packages as the notebook).
 """
 
@@ -34,8 +34,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-HERE = Path(__file__).resolve().parent
-MODELS_DIR = HERE.parent / "models"
+ROOT = Path(__file__).resolve().parents[2]
+MODELS_DIR = ROOT / "results" / "models"
 THRESHOLD = 0.05
 ALPHA = 0.05
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check, restore and build the five datasets with pinned SHA-256 hashes.
 
-The data files are committed in sensitivity-consistency-LLM/data. This script:
+The data files are committed in original-paper/data. This script:
   1. downloads a file only when it is missing or its hash is wrong,
   2. extracts WOS46985/X.txt from X.zip (the notebook reads X.txt),
   3. builds CB/test_labeled.jsonl from the original CB annotations,

@@ -5,7 +5,7 @@ The script runs the notebook cells that load the data and set the prompts,
 then calls the unchanged run_grid_search() from evaluator.py. Only the model
 list, the results folder and (with --smoke) the sample count change.
 
-The Slurm jobs in jobs/deepseek-r1-7b/ start it. It expects a running Ollama
+The Slurm jobs in scripts/hpc/jobs/deepseek-r1-7b/ start it. It expects a running Ollama
 server (OpenAI-compatible API) and the datasets in WORK_DIR/data.
 
 Adapted from scripts/run_qwen.py (branch qwen3.5-27b-jobs). The differences:
@@ -30,7 +30,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CODE_DIR = ROOT / "sensitivity-consistency-LLM"
+CODE_DIR = ROOT / "original-paper"
 SCRIPT_DIR = Path(__file__).resolve().parent
 LLM_NAME = "deepseek-r1-7b"  # must not contain "_": evaluator.py splits result keys on it
 SMOKE_SAMPLES = 2

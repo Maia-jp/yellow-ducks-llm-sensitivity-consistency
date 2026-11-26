@@ -3,11 +3,11 @@
 # the private Ollama server answer with 1, 4, 8 and 16 requests at the same time?
 # It also tries to turn the reasoning off through Ollama's own API.
 # Submit from the repository root on the login node:
-#   sbatch jobs/deepseek-r1-7b/bench.sbatch
+#   sbatch scripts/hpc/jobs/deepseek-r1-7b/bench.sbatch
 # It writes no results of the paper. Read the numbers in the .out file.
 #SBATCH --job-name=deepseek7b-bench
-#SBATCH --output=jobs/deepseek-r1-7b/slurm-logs/%x-%j.out
-#SBATCH --error=jobs/deepseek-r1-7b/slurm-logs/%x-%j.err
+#SBATCH --output=scripts/hpc/jobs/deepseek-r1-7b/slurm-logs/%x-%j.out
+#SBATCH --error=scripts/hpc/jobs/deepseek-r1-7b/slurm-logs/%x-%j.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8

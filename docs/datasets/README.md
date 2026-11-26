@@ -5,7 +5,7 @@ We checked each file against its official source on 2026-10-27.
 
 ## Where the data is
 
-The datasets are committed in `sensitivity-consistency-LLM/data/`. Each dataset folder has its own `README.md` with the source, the class counts, the cut and the 1-shot examples. Start with [the data index](../../sensitivity-consistency-LLM/data/README.md).
+The datasets are committed in `original-paper/data/`. Each dataset folder has its own `README.md` with the source, the class counts, the cut and the 1-shot examples. Start with [the data index](../../original-paper/data/README.md).
 
 | File in this folder | Purpose |
 |---|---|
@@ -26,10 +26,10 @@ Test on 2026-10-27: we deleted 8 files and damaged 1 in a copy. The script resto
 Check the subsampling on any machine:
 
 ```bash
-python3 scripts/replay_sampling.py --dataset dbpedia --input-file sensitivity-consistency-LLM/data/DBPEDIA/test.csv
+python3 scripts/replay_sampling.py --dataset dbpedia --input-file original-paper/data/DBPEDIA/test.csv
 python3 scripts/replay_sampling.py --dataset wos \
-  --input-file sensitivity-consistency-LLM/data/WOS46985/X.txt \
-  --target-file sensitivity-consistency-LLM/data/WOS46985/YL1.txt
+  --input-file original-paper/data/WOS46985/X.txt \
+  --target-file original-paper/data/WOS46985/YL1.txt
 ```
 
 The printed `ids sha256` must start with `d80c8cf59cacb7d8` (DBPedia) and `0123a6e1855264f0` (WoS).
